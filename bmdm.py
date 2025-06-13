@@ -6,6 +6,7 @@ class BioMedDataManager:
     """
     # Medical data management
     * Method 'boot' for create hidden folder named '.bmdm' (start management)
+    * Method 'config' to configure and store user or doctor information
 
     """
     def __init__(self):
@@ -51,3 +52,16 @@ class BioMedDataManager:
                 json.dump({"manager": {"name": "", "email": ""}}, conf)
             with open(self.index_file, "w") as index:
                 json.dump([], index)
+    
+    def config(self, name: str = None, email: str = None):
+        """
+        to configure and store user or doctor information
+        """
+        # To add name and email to config file
+        with open(self.config_file, 'a') as conf:
+            config = json.load(conf)
+            if name != None:
+                config["name"] = name
+            if email != None:
+                config["email"] = email
+            conf.close()
