@@ -7,7 +7,7 @@ class BioMedDataManager:
     # Medical data management
     * Method 'boot' for create hidden folder named '.bmdm' (start management)
     * Method 'config' to configure and store user or doctor information
-
+    * Method 'admit' to add medical data
     """
     def __init__(self):
         self.bmdm_dir = ".bmdm"
@@ -57,6 +57,9 @@ class BioMedDataManager:
         """
         to configure and store user or doctor information
         """
+        if not os.path.isdir(self.bmdm_dir):
+            raise "First you need to load the boot. (python bmdm.py boot)"
+
         # To add name and email to config file
         with open(self.config_file, 'a') as conf:
             config = json.load(conf)
@@ -65,3 +68,31 @@ class BioMedDataManager:
             if email != None:
                 config["email"] = email
             conf.close()
+    
+    def admit(self, file_path: str):
+        """
+        To add medical data
+        """
+        if not os.path.isdir(self.bmdm_dir):
+            raise "First you need to load the boot, run 'python bmdm.py boot' first"
+        
+        if not os.path.exists(file_path):
+            raise "Path does not exist"
+        
+        if os.path.isfile(file_path):
+            if not file_path.endswith(".txt") and not file_path.endswith(".json"):
+                raise TypeError("The format is invalid.")
+            
+            elif file_path.endswith(".txt"):
+                file_name = os.path.basename(file_path)
+                parts = file_name.replace(".txt", "").split("_")
+                if len(parts) != 4:
+                    raise NameError("The file name is incorrect. the correct format is 'PATIENTID_STUDYDATE_MODALITY_FILENAME.txt' ")
+                else:
+                    metadata = {
+                        "patient_id": parts[0],
+                        "study_date": parts[1],
+                        "modality": parts[2],
+                        "decryption": parts[3],
+                        "path": file_path
+                    }
