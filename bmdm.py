@@ -79,20 +79,53 @@ class BioMedDataManager:
         if not os.path.exists(file_path):
             raise "Path does not exist"
         
-        if os.path.isfile(file_path):
-            if not file_path.endswith(".txt") and not file_path.endswith(".json"):
-                raise TypeError("The format is invalid.")
-            
-            elif file_path.endswith(".txt"):
-                file_name = os.path.basename(file_path)
-                parts = file_name.replace(".txt", "").split("_")
+        def extract_metadata(file:str):
+            """
+            To extract metadata(patient_id, study_date, modality, decryption, path)
+            """
+            # for 'txt" files
+            if file.endswith(".txt"):
+                file = os.path.basename(file)
+                parts = file.replace(".txt", "").split("_")
                 if len(parts) != 4:
-                    raise NameError("The file name is incorrect. the correct format is 'PATIENTID_STUDYDATE_MODALITY_FILENAME.txt' ")
+                    raise NameError("The file name is incorrect. the correct format is 'PATIENTID_STUDYDATE_MODALITY_DESCRIPTION.txt' ")
                 else:
                     metadata = {
                         "patient_id": parts[0],
                         "study_date": parts[1],
                         "modality": parts[2],
-                        "decryption": parts[3],
-                        "path": file_path
+                        "description": parts[3],
+                        "path": file
                     }
+                    patient_id = parts[0]
+                    return metadata, patient_id
+            # for 'json' files
+            elif file.endswith(".json"):
+                with open(file, 'r') as f:
+                    metadata = json.load(f)
+                    patient_id = metadata["patient_id"]
+                    return metadata, patient_id
+
+        # if input is file
+        if os.path.isfile(file_path):
+            if not file_path.endswith((".txt", ".json")):
+                raise TypeError("The format is invalid.")
+            metadata, patient_id = extract_metadata(file_path)
+            med_data = {patient_id: metadata}
+            with open(self.index_file, "a") as index:
+                json.dump(med_data, index)
+        
+        # if input is folder
+        elif os.path.isdir(file_path):
+            files = []
+            for f in os.listdir(file_path):
+                if f.endswith((".txt", ".json")):
+                    metadata, patient_id = extract_metadata(f'{file_path}/{f}')
+                    med_data = {patient_id: metadata}
+                    with open(self.index_file, "a") as index:
+                        json.dump(med_data, index)
+                    files.append(f)
+                
+            if len(files) == 0:
+                print("The specified folder does not contain a file with the correct format.")
+                
