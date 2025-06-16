@@ -1,6 +1,7 @@
 # libraries
 import os
 import json
+import hashlib
 
 class BioMedDataManager:
     """
@@ -97,33 +98,37 @@ class BioMedDataManager:
                         "description": parts[3],
                         "path": file
                     }
-                    patient_id = parts[0]
-                    return metadata, patient_id
+                    hash = hashlib.blake2s(metadata.encode('utf-8')).hexdigest()
+                    return metadata, hash
             # for 'json' files
             elif file.endswith(".json"):
                 with open(file, 'r') as f:
                     metadata = json.load(f)
-                    patient_id = metadata["patient_id"]
-                    return metadata, patient_id
+                    hash = hashlib.blake2s(metadata.encode('utf-8')).hexdigest()
+                    return metadata, hash
 
         # if input is file
         if os.path.isfile(file_path):
             if not file_path.endswith((".txt", ".json")):
                 raise TypeError("The format is invalid.")
-            metadata, patient_id = extract_metadata(file_path)
-            med_data = {patient_id: metadata}
+            metadata, hash = extract_metadata(file_path)
+            med_data = {hash[:8]: metadata}
             with open(self.index_file, "a") as index:
                 json.dump(med_data, index)
+            with open(f"{self.objects_dir}/{hash}.data", 'w') as mdate:
+                json.dump(metadata, mdate)
         
         # if input is folder
         elif os.path.isdir(file_path):
             files = []
             for f in os.listdir(file_path):
                 if f.endswith((".txt", ".json")):
-                    metadata, patient_id = extract_metadata(f'{file_path}/{f}')
-                    med_data = {patient_id: metadata}
+                    metadata, hash = extract_metadata(f'{file_path}/{f}')
+                    med_data = {hash[:8]: metadata}
                     with open(self.index_file, "a") as index:
                         json.dump(med_data, index)
+                    with open(f"{self.objects_dir}/{hash}.data", 'w') as mdate:
+                        json.dump(metadata, mdate)
                     files.append(f)
                 
             if len(files) == 0:
