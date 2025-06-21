@@ -9,6 +9,7 @@ class BioMedDataManager:
     * Method 'boot' for create hidden folder named '.bmdm' (start management)
     * Method 'config' to configure and store user or doctor information
     * Method 'admit' to add medical data
+    * Method 'stats' to display a collection of data and statical information under management and observation
     """
     def __init__(self):
         self.bmdm_dir = ".bmdm"
@@ -98,13 +99,13 @@ class BioMedDataManager:
                         "description": parts[3],
                         "path": file
                     }
-                    hash = hashlib.blake2s(metadata.encode('utf-8')).hexdigest()
+                    hash = hashlib.blake2s(file.encode('utf-8')).hexdigest()
                     return metadata, hash
             # for 'json' files
             elif file.endswith(".json"):
                 with open(file, 'r') as f:
                     metadata = json.load(f)
-                    hash = hashlib.blake2s(metadata.encode('utf-8')).hexdigest()
+                    hash = hashlib.blake2s(file.encode('utf-8')).hexdigest()
                     return metadata, hash
 
         # if input is file
@@ -134,3 +135,19 @@ class BioMedDataManager:
             if len(files) == 0:
                 print("The specified folder does not contain a file with the correct format.")
                 
+    def stats(self):
+        """
+        to display a collection of data and statical information under management and observation
+        """
+        if not os.path.isdir(self.bmdm_dir):
+            raise "First you need to load the boot, run 'python bmdm.py boot' first"
+        
+        with open(self.index_file, "r") as index:
+            data = json.load(index)
+            total = len(data)
+            num = 0 # number of data that are not recoded
+            for i in os.listdir("./"):
+                if hashlib.blake2s(i.encode('utf-8')).hexdigest()[:8] not in data.keys():
+                    num +=1
+            # A series of statistical information to be added later
+            ...
