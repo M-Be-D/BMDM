@@ -142,12 +142,19 @@ class BioMedDataManager:
         if not os.path.isdir(self.bmdm_dir):
             raise "First you need to load the boot, run 'python bmdm.py boot' first"
         
-        with open(self.index_file, "r") as index:
-            data = json.load(index)
-            total = len(data)
-            num = 0 # number of data that are not recoded
-            for i in os.listdir("./"):
-                if hashlib.blake2s(i.encode('utf-8')).hexdigest()[:8] not in data.keys():
-                    num +=1
-            # A series of statistical information to be added later
-            ...
+        try:
+            with open(self.index_file, "r") as index:
+                data = json.load(index)
+                total = len(data)
+                num = 0 # number of data that are not recoded
+                for i in os.listdir("./"):
+                    if hashlib.blake2s(i.encode('utf-8')).hexdigest()[:8] not in data.keys():
+                        num +=1
+                # A series of statistical information to be added later
+                ...
+
+        except Exception as e:
+            if "No such file or directory" in e:
+                print("You must first run 'bmdm.py boot'.")
+            else:
+                print(f"ERROR: {e}")
