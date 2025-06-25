@@ -6,10 +6,11 @@ import hashlib
 class BioMedDataManager:
     """
     # Medical data management
-    * Method 'boot' for create hidden folder named '.bmdm' (start management)
-    * Method 'config' to configure and store user or doctor information
-    * Method 'admit' to add medical data
-    * Method 'stats' to display a collection of data and statical information under management and observation
+    * Method 'boot': for create hidden folder named '.bmdm' (start management)
+    * Method 'config': to configure and store user or doctor information
+    * Method 'admit': to add medical data
+    * Method 'stats': to display a collection of data and statical information under management and observation
+    * Method 'tag': to add or remove description tags for a specific data item
     """
     def __init__(self):
         self.bmdm_dir = ".bmdm"
@@ -89,22 +90,27 @@ class BioMedDataManager:
             if file.endswith(".txt"):
                 file = os.path.basename(file)
                 parts = file.replace(".txt", "").split("_")
-                if len(parts) != 4:
+                if len(parts) < 4:
                     raise NameError("The file name is incorrect. the correct format is 'PATIENTID_STUDYDATE_MODALITY_DESCRIPTION.txt' ")
                 else:
                     metadata = {
+                        "filename": file,
                         "patient_id": parts[0],
                         "study_date": parts[1],
                         "modality": parts[2],
-                        "description": parts[3],
-                        "path": file
+                        "description": parts[3:],
+                        "path": file,
+                        "tags": {}
                     }
                     hash = hashlib.blake2s(file.encode('utf-8')).hexdigest()
                     return metadata, hash
             # for 'json' files
             elif file.endswith(".json"):
-                with open(file, 'r') as f:
+                with open(file, 'rb') as f:
                     metadata = json.load(f)
+                    metadata["filename"] = file
+                    metadata["tags"] = {}
+                    file = f.read()
                     hash = hashlib.blake2s(file.encode('utf-8')).hexdigest()
                     return metadata, hash
 
@@ -148,8 +154,14 @@ class BioMedDataManager:
                 total = len(data)
                 num = 0 # number of data that are not recoded
                 for i in os.listdir("./"):
-                    if hashlib.blake2s(i.encode('utf-8')).hexdigest()[:8] not in data.keys():
-                        num +=1
+                    if i.endswith(".txt"):    
+                        if hashlib.blake2s(i.encode('utf-8')).hexdigest()[:8] not in data.keys():
+                            num +=1
+                    elif i.endswith(".json"):
+                        with open(i, "rb") as f:
+                            file = f.read()
+                            if hashlib.blake2s(file.encode('utf-8')).hexdigest()[:8] not in data.keys():
+                                num += 1
                 # A series of statistical information to be added later
                 ...
 
@@ -158,3 +170,32 @@ class BioMedDataManager:
                 print("You must first run 'bmdm.py boot'.")
             else:
                 print(f"ERROR: {e}")
+    
+    def tag(self, id_filename:str, key:str, value:str=None, remove= False):
+        """
+        to add or remove description tags for a specific data item
+        """
+        if not os.path.isdir(self.bmdm_dir):
+            raise "First you need to load the boot, run 'python bmdm.py boot' first"
+        
+        with open(self.index_file, "a") as i_f:
+            index_file = json.load(i_f)
+            tags = dict(i["tags"] for i in index_file.value()["tags"])
+            hashs = tuple(index_file.keys())
+            id_s = [i["patient_id"] for i in dict(index_file.values())]
+            name_s = [i["filename"] for i in dict(index_file.values())]
+            if id_filename not in id_s or id_filename not in name_s:
+                raise "The entered ID does not exist."
+            elif remove:
+                if key not in tags:
+                    raise "The entered key does not exist."
+                else:
+                    index_file.values()["tags"].pop(key)
+                    json.dump(index_file, i_f)
+            else:
+                if id_filename in id_s:
+                    index_file[hashs[id_s.index(id_filename)]]["tags"][key] = value
+                    json.dump(index_file, i_f)
+                elif id_filename in name_s:
+                    index_file[hashs[name_s.index(id_filename)]]["tags"][key] = value
+                    json.dump(index_file, i_f)
