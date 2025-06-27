@@ -11,6 +11,7 @@ class BioMedDataManager:
     * Method 'admit': to add medical data
     * Method 'stats': to display a collection of data and statical information under management and observation
     * Method 'tag': to add or remove description tags for a specific data item
+    * Method 'find': to search between data with a specific filter
     """
     def __init__(self):
         self.bmdm_dir = ".bmdm"
@@ -178,8 +179,8 @@ class BioMedDataManager:
         if not os.path.isdir(self.bmdm_dir):
             raise "First you need to load the boot, run 'python bmdm.py boot' first"
         
-        with open(self.index_file, "a") as i_f:
-            index_file = json.load(i_f)
+        with open(self.index_file, "a") as index:
+            index_file = json.load(index)
             tags = dict(i["tags"] for i in index_file.value()["tags"])
             hashs = tuple(index_file.keys())
             id_s = [i["patient_id"] for i in dict(index_file.values())]
@@ -191,11 +192,48 @@ class BioMedDataManager:
                     raise "The entered key does not exist."
                 else:
                     index_file.values()["tags"].pop(key)
-                    json.dump(index_file, i_f)
+                    json.dump(index_file, index)
             else:
                 if id_filename in id_s:
                     index_file[hashs[id_s.index(id_filename)]]["tags"][key] = value
-                    json.dump(index_file, i_f)
+                    json.dump(index_file, index)
                 elif id_filename in name_s:
                     index_file[hashs[name_s.index(id_filename)]]["tags"][key] = value
-                    json.dump(index_file, i_f)
+                    json.dump(index_file, index)
+    
+    def find(self, filename=None, patient_id=None, study_date=None, modality=None, tag=None):
+        """
+        to search between data with a specific filter
+        """
+        if not os.path.isdir(self.bmdm_dir):
+            raise "First you need to load the boot, run 'python bmdm.py boot' first"
+        
+        with open(self.index_file, "r") as index:
+            index_file = json.load(index)
+            # filename_s = [i["filename"] for i in {index_file.values()}]
+            # id_s = [i["patient_id"] for i in {index_file.values()}]
+            # study_date_s = [i["study_data"] for i in {index_file.values()}]
+            # modality_s = [i["modality"] for i in {index_file.values()}]
+            # tags_s = [i["tags"] for i in {index_file.values()}]
+        
+            results = []
+
+            for entry in index_file:
+                if filename and index_file[entry]["filename"] != filename:
+                    match = False
+                if patient_id and index_file[entry]["patient_id"] != patient_id:
+                    match = False
+                if study_date and index_file[entry]["study_date"] != study_date:
+                    match = False
+                if modality and index_file[entry]["modality"] != modality:
+                    match = False
+                if tag:
+                    key, value = tag.split('=')
+                    if key not in index_file[entry]['tags'].keys() and index_file[entry]['tags'][key] != value:
+                        match = False
+                
+                if match:
+                    results.append(index_file[entry])
+            
+        return results
+    
