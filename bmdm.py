@@ -13,13 +13,13 @@ class BioMedDataManager:
     * Method 'stats': to display a collection of data and statical information under management and observation
     * Method 'tag': to add or remove description tags for a specific data item
     * Method 'find': to search between data with a specific filter
+    * Method 'hist': to display history or logs
     """
     def __init__(self):
         self.bmdm_dir = ".bmdm"
         self.index_file = ".bmdm/index.json"
         self.config_file = ".bmdm/config.json"
         self.objects_dir = ".bmdm/objects"
-        self.history_dir = ".bmdm/history"
         self.history_file = ".bmdm/history.log"
 
     def boot(self):
@@ -40,8 +40,9 @@ class BioMedDataManager:
                     json.dump({"manager": {"name": "", "email": ""}}, conf)
             if not os.path.isdir(self.objects_dir):
                 os.mkdir(self.objects_dir)
-            if not os.path.isdir(self.history_dir):
-                os.mkdir(self.history_dir)
+            if not os.path.isfile(self.history_file):
+                with open(self.history_file, "w") as h_f:
+                    h_f.close()
         
         # Create a folder
         else:    
@@ -53,7 +54,8 @@ class BioMedDataManager:
                 
             # create object and history folders
             os.makedirs(self.objects_dir)
-            os.makedirs(self.history_dir)
+            with open(self.history_file, "w") as h_f:
+                h_f.close()
 
             # create config and index files
             with open(self.config_file, "w") as conf:
@@ -278,3 +280,18 @@ class BioMedDataManager:
                 user = str(config_file).replace('{', '').replace('}', '')
             
             f.write(f"{timestamp}|{activity_type}: {details}|{user}\n")
+
+    def hist(self, number=5):
+        """
+        To display history or logs
+        """
+        if not os.path.isdir(self.bmdm_dir):
+            self._log_activity("BOOT_ERROR", "Boot command not executed.")
+            raise "First you need to load the boot, run 'python bmdm.py boot' first"
+        with open(self.history_file, 'r') as h_f:    
+            lines = h_f.readlines()
+            lines.reverse()
+            for l in lines[:number+1]:
+                print(f'{l}\n')
+        
+        self._log_activity("HIST", f"Show {number} recently performed activities")
