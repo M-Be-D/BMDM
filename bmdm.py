@@ -14,6 +14,7 @@ class BioMedDataManager:
     * Method 'tag': to add or remove description tags for a specific data item
     * Method 'find': to search between data with a specific filter
     * Method 'hist': to display history or logs
+    * Method 'export': to export information
     """
     def __init__(self):
         self.bmdm_dir = ".bmdm"
@@ -295,3 +296,34 @@ class BioMedDataManager:
                 print(f'{l}\n')
         
         self._log_activity("HIST", f"Show {number} recently performed activities")
+
+    def export(self, id, path):
+        """
+        To export information
+        """
+        if not os.path.isdir(self.bmdm_dir):
+            self._log_activity("BOOT_ERROR", "Boot command not executed.")
+            raise "First you need to load the boot, run 'python bmdm.py boot' first"
+        
+        if not os.path.exists(path):
+            self._log_activity("EXPORT_ERROR", "Target directory does not exist.")
+            raise "Target directory does not exist."
+        
+        with open(self.index_file, "r") as i_f:
+            index_file = json.load(i_f)
+            values = dict(index_file.values())
+            for entry in values:
+                if entry["patient_id"] == id:
+                    if os.path.isfile(path):
+                        self._log_activity("EXPORT_ERROR", f"{os.path.basename(path)} is file and can not write to it your information.")
+                        raise f"{os.path.basename(path)} is file and can not write to it your information. you should just enter the folder path."
+                    else:
+                        with open(rf"{path}/{values["filename"]}", "w") as export_file:
+                            json.dump(entry, export_file)
+                    self._log_activity("EXPORT", f"Extracted successfully in the file {{path}/{values["filename"]}} done.")
+                    return
+                
+                else:
+                    self._log_activity("EXPORT_ERROR", "ID not found.")
+                    raise "ID not found."
+                
