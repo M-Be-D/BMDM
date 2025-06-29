@@ -15,6 +15,7 @@ class BioMedDataManager:
     * Method 'find': to search between data with a specific filter
     * Method 'hist': to display history or logs
     * Method 'export': to export information
+    * Method 'remove': to remove information
     """
     def __init__(self):
         self.bmdm_dir = ".bmdm"
@@ -311,19 +312,38 @@ class BioMedDataManager:
         
         with open(self.index_file, "r") as i_f:
             index_file = json.load(i_f)
-            values = dict(index_file.values())
-            for entry in values:
+            metadata = dict(index_file.values())
+            for entry in metadata:
                 if entry["patient_id"] == id:
                     if os.path.isfile(path):
                         self._log_activity("EXPORT_ERROR", f"{os.path.basename(path)} is file and can not write to it your information.")
                         raise f"{os.path.basename(path)} is file and can not write to it your information. you should just enter the folder path."
                     else:
-                        with open(rf"{path}/{values["filename"]}", "w") as export_file:
+                        with open(rf"{path}/{metadata["filename"]}", "w") as export_file:
                             json.dump(entry, export_file)
-                    self._log_activity("EXPORT", f"Extracted successfully in the file {{path}/{values["filename"]}} done.")
+                    self._log_activity("EXPORT", f"Extracted successfully in the file {path}/{metadata["filename"]} done.")
                     return
+
+            # if id file not exist    
+            self._log_activity("EXPORT_ERROR", "ID not found.")
+            raise "ID not found."
                 
+    def remove(self, id_filename):
+        """
+        To remove information
+        """
+        if not os.path.isdir(self.bmdm_dir):
+            self._log_activity("BOOT_ERROR", "Boot command not executed.")
+            raise "First you need to load the boot, run 'python bmdm.py boot' first"
+        
+        with open(self.index_file, 'a') as i_f:
+            index_file = json.load(i_f)
+            
+            for h, entry in enumerate(index_file):
+                if entry["filename"] == id_filename or entry["patient_id"] == id_filename:
+                    index_file.pop(h)
+                    self._log_activity("REMOVE", f"{id_filename} was removed.")
+                    return
                 else:
-                    self._log_activity("EXPORT_ERROR", "ID not found.")
-                    raise "ID not found."
-                
+                    self._log_activity("REMOVE_ERROR", f"{id_filename} not found.")
+                    raise f"{id_filename} not found."
