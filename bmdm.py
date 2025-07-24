@@ -73,15 +73,16 @@ class BioMedDataManager:
         """
         if not os.path.isdir(self.bmdm_dir):
             self._log_activity("BOOT_ERROR", "Boot command not executed.")
-            raise "First you need to load the boot. (python bmdm.py boot)"
+            raise RuntimeError("First you need to load the boot. (python bmdm.py boot)")
 
         # To add name and email to config file
         with open(self.config_file, 'a') as conf:
             config = json.load(conf)
             if name != None:
-                config["name"] = name
+                config["manager"]["name"] = name
             if email != None:
-                config["email"] = email
+                config["manager"]["email"] = email
+            json.dump(config, conf)
             conf.close()
         
         self._log_activity("CONFIG_UPDATE", f"Updated config: name={name}, email={email}")
@@ -92,11 +93,11 @@ class BioMedDataManager:
         """
         if not os.path.isdir(self.bmdm_dir):
             self._log_activity("BOOT_ERROR", "Boot command not executed.")
-            raise "First you need to load the boot, run 'python bmdm.py boot' first"
+            raise RuntimeError("First you need to load the boot, run 'python bmdm.py boot' first")
         
         if not os.path.exists(file_path):
             self._log_activity("PATH_ERROR", "Path does not exist.")
-            raise "Path does not exist"
+            raise RuntimeError("Path does not exist")
         
         def extract_metadata(file:str):
             """
@@ -116,7 +117,7 @@ class BioMedDataManager:
                         "study_date": parts[1],
                         "modality": parts[2],
                         "description": parts[3:],
-                        "path": file,
+                        "path": file_path,
                         "tags": {}
                     }
                     hash = hashlib.blake2s(file.encode('utf-8')).hexdigest()
@@ -128,7 +129,7 @@ class BioMedDataManager:
                     metadata["filename"] = file
                     metadata["tags"] = {}
                     file = f.read()
-                    hash = hashlib.blake2s(file.encode('utf-8')).hexdigest()
+                    hash = hashlib.blake2s(file).hexdigest()
                     return metadata, hash
 
         # if input is file
@@ -171,7 +172,7 @@ class BioMedDataManager:
         """
         if not os.path.isdir(self.bmdm_dir):
             self._log_activity("BOOT_ERROR", "Boot command not executed.")
-            raise "First you need to load the boot, run 'python bmdm.py boot' first"
+            raise RuntimeError("First you need to load the boot, run 'python bmdm.py boot' first")
         
         try:
             with open(self.index_file, "r") as index:
@@ -185,7 +186,7 @@ class BioMedDataManager:
                     elif i.endswith(".json"):
                         with open(i, "rb") as f:
                             file = f.read()
-                            if hashlib.blake2s(file.encode('utf-8')).hexdigest()[:8] not in data.keys():
+                            if hashlib.blake2s(file).hexdigest()[:8] not in data.keys():
                                 num += 1
                 # A series of statistical information to be added later
                 ...
@@ -193,12 +194,12 @@ class BioMedDataManager:
                 self._log_activity("STATS", "All data was retrieved.")
 
         except Exception as e:
-            if "No such file or directory" in e:
+            if "No such file or directory" in str(e):
                 self._log_activity("BOOT_ERROR", "Boot command not executed.")
                 print("You must first run 'bmdm.py boot'.")
             else:
-                self._log_activity("STATS_ERROR", e)
-                print(f"ERROR: {e}")
+                self._log_activity("STATS_ERROR", str(e))
+                print(f"ERROR: {str(e)}")
     
     def tag(self, id_filename:str, key:str, value:str=None, remove= False):
         """
@@ -206,7 +207,7 @@ class BioMedDataManager:
         """
         if not os.path.isdir(self.bmdm_dir):
             self._log_activity("BOOT_ERROR", "Boot command not executed.")
-            raise "First you need to load the boot, run 'python bmdm.py boot' first"
+            raise RuntimeError("First you need to load the boot, run 'python bmdm.py boot' first")
         
         with open(self.index_file, "a") as index:
             index_file = json.load(index)
@@ -216,11 +217,11 @@ class BioMedDataManager:
             name_s = [i["filename"] for i in dict(index_file.values())]
             if id_filename not in id_s or id_filename not in name_s:
                 self._log_activity("TAG_ERROR", f"The {id_filename} not found.")
-                raise "The entered ID does not exist."
+                raise RuntimeError("The entered ID does not exist.")
             elif remove:
                 if key not in tags:
                     self._log_activity("TAG_ERROR", "The entered key does not exist in tags list.")
-                    raise "The entered key does not exist."
+                    raise RuntimeError("The entered key does not exist.")
                 else:
                     index_file.values()["tags"].pop(key)
                     json.dump(index_file, index)
@@ -240,7 +241,7 @@ class BioMedDataManager:
         """
         if not os.path.isdir(self.bmdm_dir):
             self._log_activity("BOOT_ERROR", "Boot command not executed.")
-            raise "First you need to load the boot, run 'python bmdm.py boot' first"
+            raise RuntimeError("First you need to load the boot, run 'python bmdm.py boot' first")
         
         with open(self.index_file, "r") as index:
             index_file = json.load(index)
@@ -253,6 +254,7 @@ class BioMedDataManager:
             results = []
 
             for entry in index_file:
+                match = True
                 if filename and index_file[entry]["filename"] != filename:
                     match = False
                 if patient_id and index_file[entry]["patient_id"] != patient_id:
@@ -263,7 +265,7 @@ class BioMedDataManager:
                     match = False
                 if tag:
                     key, value = tag.split('=')
-                    if key not in index_file[entry]['tags'].keys() and index_file[entry]['tags'][key] != value:
+                    if key not in index_file[entry]['tags'].keys() or index_file[entry]['tags'][key] != value:
                         match = False
                 
                 if match:
@@ -289,7 +291,7 @@ class BioMedDataManager:
         """
         if not os.path.isdir(self.bmdm_dir):
             self._log_activity("BOOT_ERROR", "Boot command not executed.")
-            raise "First you need to load the boot, run 'python bmdm.py boot' first"
+            raise RuntimeError("First you need to load the boot, run 'python bmdm.py boot' first")
         with open(self.history_file, 'r') as h_f:    
             lines = h_f.readlines()
             lines.reverse()
@@ -304,11 +306,11 @@ class BioMedDataManager:
         """
         if not os.path.isdir(self.bmdm_dir):
             self._log_activity("BOOT_ERROR", "Boot command not executed.")
-            raise "First you need to load the boot, run 'python bmdm.py boot' first"
+            raise RuntimeError("First you need to load the boot, run 'python bmdm.py boot' first")
         
         if not os.path.exists(path):
             self._log_activity("EXPORT_ERROR", "Target directory does not exist.")
-            raise "Target directory does not exist."
+            raise RuntimeError("Target directory does not exist.")
         
         with open(self.index_file, "r") as i_f:
             index_file = json.load(i_f)
@@ -317,16 +319,16 @@ class BioMedDataManager:
                 if entry["patient_id"] == id:
                     if os.path.isfile(path):
                         self._log_activity("EXPORT_ERROR", f"{os.path.basename(path)} is file and can not write to it your information.")
-                        raise f"{os.path.basename(path)} is file and can not write to it your information. you should just enter the folder path."
+                        raise RuntimeError(f"{os.path.basename(path)} is file and can not write to it your information. you should just enter the folder path.")
                     else:
-                        with open(rf"{path}/{metadata["filename"]}", "w") as export_file:
+                        with open(rf"{path}/{metadata['filename']}", "w") as export_file:
                             json.dump(entry, export_file)
-                    self._log_activity("EXPORT", f"Extracted successfully in the file {path}/{metadata["filename"]} done.")
+                    self._log_activity("EXPORT", f"Extracted successfully in the file {path}/{metadata['filename']} done.")
                     return
 
             # if id file not exist    
             self._log_activity("EXPORT_ERROR", "ID not found.")
-            raise "ID not found."
+            raise RuntimeError("ID not found.")
                 
     def remove(self, id_filename):
         """
@@ -334,16 +336,18 @@ class BioMedDataManager:
         """
         if not os.path.isdir(self.bmdm_dir):
             self._log_activity("BOOT_ERROR", "Boot command not executed.")
-            raise "First you need to load the boot, run 'python bmdm.py boot' first"
+            raise RuntimeError("First you need to load the boot, run 'python bmdm.py boot' first")
         
         with open(self.index_file, 'a') as i_f:
             index_file = json.load(i_f)
             
-            for h, entry in enumerate(index_file):
+            for h, key in enumerate(index_file):
+                entry = index_file[key]
                 if entry["filename"] == id_filename or entry["patient_id"] == id_filename:
                     index_file.pop(h)
                     self._log_activity("REMOVE", f"{id_filename} was removed.")
                     return
                 else:
                     self._log_activity("REMOVE_ERROR", f"{id_filename} not found.")
-                    raise f"{id_filename} not found."
+                    raise RuntimeError(f"{id_filename} not found.")
+            json.dump(index_file, i_f)
