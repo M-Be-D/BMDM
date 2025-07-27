@@ -3,7 +3,7 @@ import os
 import json
 import hashlib
 from datetime import datetime
-import main
+import UI_commandline
 
 class BioMedDataManager:
     """
@@ -358,5 +358,5 @@ class BioMedDataManager:
             with open(self.index_file, "w") as i_f:
                 json.dump(index_file, i_f)
 
-# commandline interface
-main.main()
+# command line interface
+UI_commandline.main()
