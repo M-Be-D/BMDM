@@ -3,6 +3,7 @@ import os
 import json
 import hashlib
 from datetime import datetime
+import main
 
 class BioMedDataManager:
     """
@@ -72,18 +73,18 @@ class BioMedDataManager:
         to configure and store user or doctor information
         """
         if not os.path.isdir(self.bmdm_dir):
-            self._log_activity("BOOT_ERROR", "Boot command not executed.")
+
             raise RuntimeError("First you need to load the boot. (python bmdm.py boot)")
 
         # To add name and email to config file
-        with open(self.config_file, 'a') as conf:
+        with open(self.config_file, 'r') as conf:
             config = json.load(conf)
             if name != None:
                 config["manager"]["name"] = name
             if email != None:
                 config["manager"]["email"] = email
-            json.dump(config, conf)
-            conf.close()
+            with open(self.config_file, "w") as conf:    
+                json.dump(config, conf)
         
         self._log_activity("CONFIG_UPDATE", f"Updated config: name={name}, email={email}")
     
@@ -92,7 +93,7 @@ class BioMedDataManager:
         To add medical data
         """
         if not os.path.isdir(self.bmdm_dir):
-            self._log_activity("BOOT_ERROR", "Boot command not executed.")
+            
             raise RuntimeError("First you need to load the boot, run 'python bmdm.py boot' first")
         
         if not os.path.exists(file_path):
@@ -171,7 +172,7 @@ class BioMedDataManager:
         to display a collection of data and statical information under management and observation
         """
         if not os.path.isdir(self.bmdm_dir):
-            self._log_activity("BOOT_ERROR", "Boot command not executed.")
+            
             raise RuntimeError("First you need to load the boot, run 'python bmdm.py boot' first")
         
         try:
@@ -195,21 +196,21 @@ class BioMedDataManager:
 
         except Exception as e:
             if "No such file or directory" in str(e):
-                self._log_activity("BOOT_ERROR", "Boot command not executed.")
+                
                 print("You must first run 'bmdm.py boot'.")
             else:
                 self._log_activity("STATS_ERROR", str(e))
-                print(f"ERROR: {str(e)}")
+                print(f"ERROR: {e}")
     
     def tag(self, id_filename:str, key:str, value:str=None, remove= False):
         """
         to add or remove description tags for a specific data item
         """
         if not os.path.isdir(self.bmdm_dir):
-            self._log_activity("BOOT_ERROR", "Boot command not executed.")
+            
             raise RuntimeError("First you need to load the boot, run 'python bmdm.py boot' first")
         
-        with open(self.index_file, "a") as index:
+        with open(self.index_file, "r") as index:
             index_file = json.load(index)
             tags = dict(i["tags"] for i in index_file.value()["tags"])
             hashs = tuple(index_file.keys())
@@ -224,15 +225,18 @@ class BioMedDataManager:
                     raise RuntimeError("The entered key does not exist.")
                 else:
                     index_file.values()["tags"].pop(key)
-                    json.dump(index_file, index)
+                    with open(self.index_file, "w") as index:    
+                        json.dump(index_file, index)
                     self._log_activity("REMOVE_TAG", f"Tag with key {key} was removed from data {id_filename}.")
             else:
                 if id_filename in id_s:
                     index_file[hashs[id_s.index(id_filename)]]["tags"][key] = value
-                    json.dump(index_file, index)
+                    with open(self.index_file, "w") as index:    
+                        json.dump(index_file, index)
                 elif id_filename in name_s:
                     index_file[hashs[name_s.index(id_filename)]]["tags"][key] = value
-                    json.dump(index_file, index)
+                    with open(self.index_file, "w") as index:    
+                        json.dump(index_file, index)
                 self._log_activity("ADD_TAG", f"The data {id_filename} was tagged with the value {key}={value}.")
     
     def find(self, filename=None, patient_id=None, study_date=None, modality=None, tag=None):
@@ -240,7 +244,7 @@ class BioMedDataManager:
         to search between data with a specific filter
         """
         if not os.path.isdir(self.bmdm_dir):
-            self._log_activity("BOOT_ERROR", "Boot command not executed.")
+            
             raise RuntimeError("First you need to load the boot, run 'python bmdm.py boot' first")
         
         with open(self.index_file, "r") as index:
@@ -281,7 +285,7 @@ class BioMedDataManager:
             with open(self.config_file, "r") as c_f:
                 config_file = json.load(c_f)
                 
-                user = str(config_file).replace('{', '').replace('}', '')
+                user = str(config_file).replace('{', '').replace('}', '').replace("'manager':", '')
             
             f.write(f"{timestamp}|{activity_type}: {details}|{user}\n")
 
@@ -290,7 +294,7 @@ class BioMedDataManager:
         To display history or logs
         """
         if not os.path.isdir(self.bmdm_dir):
-            self._log_activity("BOOT_ERROR", "Boot command not executed.")
+            
             raise RuntimeError("First you need to load the boot, run 'python bmdm.py boot' first")
         with open(self.history_file, 'r') as h_f:    
             lines = h_f.readlines()
@@ -305,7 +309,7 @@ class BioMedDataManager:
         To export information
         """
         if not os.path.isdir(self.bmdm_dir):
-            self._log_activity("BOOT_ERROR", "Boot command not executed.")
+            
             raise RuntimeError("First you need to load the boot, run 'python bmdm.py boot' first")
         
         if not os.path.exists(path):
@@ -335,10 +339,10 @@ class BioMedDataManager:
         To remove information
         """
         if not os.path.isdir(self.bmdm_dir):
-            self._log_activity("BOOT_ERROR", "Boot command not executed.")
+            
             raise RuntimeError("First you need to load the boot, run 'python bmdm.py boot' first")
         
-        with open(self.index_file, 'a') as i_f:
+        with open(self.index_file, 'r') as i_f:
             index_file = json.load(i_f)
             
             for h, key in enumerate(index_file):
@@ -350,4 +354,9 @@ class BioMedDataManager:
                 else:
                     self._log_activity("REMOVE_ERROR", f"{id_filename} not found.")
                     raise RuntimeError(f"{id_filename} not found.")
-            json.dump(index_file, i_f)
+            
+            with open(self.index_file, "w") as i_f:
+                json.dump(index_file, i_f)
+
+# commandline interface
+main.main()
