@@ -33,11 +33,11 @@ class BioMedDataManager:
         # Checking the existence of the bmdm folder
         if os.path.isdir(self.bmdm_dir):
             print("The bmdm folder exists.")
-            self._log_activity("BOOT", "The bmdm folder exists.")
+            self._log_activity('boot', "BOOT", "The bmdm folder exists.")
 
             if not os.path.isfile(self.index_file):
                 with open(self.index_file, "w") as index:
-                    json.dump([], index)     
+                    json.dump({}, index)     
             if not os.path.isfile(self.config_file):
                 with open(self.config_file, "w") as conf:
                     json.dump({"manager": {"name": "", "email": ""}}, conf)
@@ -64,9 +64,9 @@ class BioMedDataManager:
             with open(self.config_file, "w") as conf:
                 json.dump({"manager": {"name": "", "email": ""}}, conf)
             with open(self.index_file, "w") as index:
-                json.dump([], index)
+                json.dump({}, index)
                 
-        self._log_activity("BOOT", "BMDM initialized")
+        self._log_activity('boot', "BOOT", "BMDM initialized")
     
     def config(self, name: str = None, email: str = None):
         """
@@ -86,7 +86,7 @@ class BioMedDataManager:
             with open(self.config_file, "w") as conf:    
                 json.dump(config, conf)
         
-        self._log_activity("CONFIG_UPDATE", f"Updated config: name={name}, email={email}")
+        self._log_activity('config', "CONFIG_UPDATE", f"Updated config: name={name}, email={email}")
     
     def admit(self, file_path: str):
         """
@@ -97,7 +97,7 @@ class BioMedDataManager:
             raise RuntimeError("First you need to load the boot, run 'python bmdm.py boot' first")
         
         if not os.path.exists(file_path):
-            self._log_activity("PATH_ERROR", "Path does not exist.")
+            self._log_activity('admit', "PATH_ERROR", "Path does not exist.")
             raise RuntimeError("Path does not exist")
         
         def extract_metadata(file:str):
@@ -109,7 +109,7 @@ class BioMedDataManager:
                 file = os.path.basename(file)
                 parts = file.replace(".txt", "").split("_")
                 if len(parts) < 4:
-                    self._log_activity("TYPE_ERROR", "The input file type is incorrect.")
+                    self._log_activity('admit', "TYPE_ERROR", "The input file type is incorrect.")
                     raise NameError("The file name is incorrect. the correct format is 'PATIENTID_STUDYDATE_MODALITY_DESCRIPTION.txt' ")
                 else:
                     metadata = {
@@ -136,16 +136,19 @@ class BioMedDataManager:
         # if input is file
         if os.path.isfile(file_path):
             if not file_path.endswith((".txt", ".json")):
-                self._log_activity("FORMAT_ERROR", "The format is invalid.")
+                self._log_activity('admit', "FORMAT_ERROR", "The format is invalid.")
                 raise TypeError("The format is invalid.")
             metadata, hash = extract_metadata(file_path)
             med_data = {hash[:8]: metadata}
-            with open(self.index_file, "a") as index:
-                json.dump(med_data, index)
+            with open(self.index_file, 'r') as index:
+                index_data = json.load(index)
+            index_data.update(med_data)
+            with open(self.index_file, "w") as index:
+                json.dump(index_data, index, indent=4)
             with open(f"{self.objects_dir}/{hash}.data", 'w') as mdate:
-                json.dump(metadata, mdate)
+                json.dump(metadata, mdate, indent=4)
             
-            self._log_activity("ADMIT", "Information was recorded.")
+            self._log_activity('admit', "ADMIT", "Information was recorded.")
         
         # if input is folder
         elif os.path.isdir(file_path):
@@ -154,18 +157,21 @@ class BioMedDataManager:
                 if f.endswith((".txt", ".json")):
                     metadata, hash = extract_metadata(f'{file_path}/{f}')
                     med_data = {hash[:8]: metadata}
-                    with open(self.index_file, "a") as index:
-                        json.dump(med_data, index)
+                    with open(self.index_file, "r") as index:
+                        index_data = json.load(index)
+                    index_data.update(med_data)
+                    with open(self.index_file, "w") as index:
+                        json.dump(index_data, index, indent=4)
                     with open(f"{self.objects_dir}/{hash}.data", 'w') as mdate:
-                        json.dump(metadata, mdate)
+                        json.dump(metadata, mdate, indent=4)
                     files.append(f)
                 
             if len(files) == 0:
-                self._log_activity("ADMIT_ERROR", "The specified folder does not contain a file with the correct format.")
+                self._log_activity('admit', "ADMIT_ERROR", "The specified folder does not contain a file with the correct format.")
                 print("The specified folder does not contain a file with the correct format.")
 
             else:
-                self._log_activity("ADMIT", "Information was recorded.")
+                self._log_activity('admit', "ADMIT", "Information was recorded.")
                 
     def stats(self):
         """
@@ -192,17 +198,17 @@ class BioMedDataManager:
                 # A series of statistical information to be added later
                 ...
 
-                self._log_activity("STATS", "All data was retrieved.")
+                self._log_activity('stats', "STATS", "All data was retrieved.")
 
         except Exception as e:
             if "No such file or directory" in str(e):
                 
                 print("You must first run 'bmdm.py boot'.")
             else:
-                self._log_activity("STATS_ERROR", str(e))
+                self._log_activity('stats', "STATS_ERROR", str(e))
                 print(f"ERROR: {e}")
     
-    def tag(self, id_filename:str, key:str, value:str=None, remove= False):
+    def tag(self, id_filename:str, key:str, value:str, remove:bool):
         """
         to add or remove description tags for a specific data item
         """
@@ -212,32 +218,54 @@ class BioMedDataManager:
         
         with open(self.index_file, "r") as index:
             index_file = json.load(index)
-            tags = dict(i["tags"] for i in index_file.value()["tags"])
             hashs = tuple(index_file.keys())
-            id_s = [i["patient_id"] for i in dict(index_file.values())]
-            name_s = [i["filename"] for i in dict(index_file.values())]
-            if id_filename not in id_s or id_filename not in name_s:
-                self._log_activity("TAG_ERROR", f"The {id_filename} not found.")
-                raise RuntimeError("The entered ID does not exist.")
+            id_s = [index_file[i]["patient_id"] for i in hashs]
+            name_s = [index_file[i]["filename"] for i in hashs]
+            if id_filename in id_s:
+                tags = list(index_file[hashs[id_s.index(id_filename)]]["tags"])
+            if id_filename in name_s:
+                tags = list(index_file[hashs[name_s.index(id_filename)]]["tags"])
+            if id_filename not in id_s and id_filename not in name_s:
+                self._log_activity('tag', "TAG_ERROR", f"The {id_filename} not found.")
+                raise RuntimeError("The entered 'ID' or 'filename' does not exist.")
             elif remove:
                 if key not in tags:
-                    self._log_activity("TAG_ERROR", "The entered key does not exist in tags list.")
+                    self._log_activity('tag', "TAG_ERROR", "The entered key does not exist in tags list.")
                     raise RuntimeError("The entered key does not exist.")
                 else:
-                    index_file.values()["tags"].pop(key)
+                    if id_filename in id_s:
+                        del index_file[hashs[id_s.index(id_filename)]]["tags"][key]
+                    elif id_filename in name_s:
+                        del index_file[hashs[name_s.index(id_filename)]]["tags"][key]
                     with open(self.index_file, "w") as index:    
-                        json.dump(index_file, index)
-                    self._log_activity("REMOVE_TAG", f"Tag with key {key} was removed from data {id_filename}.")
+                        json.dump(index_file, index, indent=4)
+                    self._log_activity('tag', "REMOVE_TAG", f"Tag with key {key} was removed from data {id_filename}.")
             else:
                 if id_filename in id_s:
-                    index_file[hashs[id_s.index(id_filename)]]["tags"][key] = value
+                    if key not in list(index_file[hashs[id_s.index(id_filename)]]["tags"].keys()):
+                        index_file[hashs[id_s.index(id_filename)]]["tags"][key] = value
+                    else:
+                        if input("A tag with this key already exists.\nAre you sure you want to change it(yes,no)? ").lower() in ('y', "yes"):
+                            index_file[hashs[id_s.index(id_filename)]]["tags"][key] = value
+                        else:
+                            print('No changes were made.')
+                            self._log_activity('tag', "ADD_TAG", "Not new tags have been added")
+                            return
                     with open(self.index_file, "w") as index:    
-                        json.dump(index_file, index)
+                        json.dump(index_file, index, indent=4)
                 elif id_filename in name_s:
-                    index_file[hashs[name_s.index(id_filename)]]["tags"][key] = value
+                    if key not in list(index_file[hashs[name_s.index(id_filename)]]["tags"].keys()):    
+                        index_file[hashs[name_s.index(id_filename)]]["tags"][key] = value
+                    else:
+                        if input("A tag with this key already exists.\nAre you sure you want to change it(yes,no)? ").lower() in ('y', "yes"):
+                            index_file[hashs[name_s.index(id_filename)]]["tags"][key] = value
+                        else:
+                            print('No changes were made.')
+                            self._log_activity('tag', "ADD_TAG", "Not new tags have been added")
+                            return
                     with open(self.index_file, "w") as index:    
-                        json.dump(index_file, index)
-                self._log_activity("ADD_TAG", f"The data {id_filename} was tagged with the value {key}={value}.")
+                        json.dump(index_file, index, indent=4)
+                self._log_activity('tag', "ADD_TAG", f"The data '{id_filename}' was tagged with the value '{key}={value}'.")
     
     def find(self, filename=None, patient_id=None, study_date=None, modality=None, tag=None):
         """
@@ -274,10 +302,10 @@ class BioMedDataManager:
                 
                 if match:
                     results.append(index_file[entry])
-        self._log_activity("SEARCH", f"Searched with criteria: filename={filename}, patient_id={patient_id}, modality={modality}, date={study_date}, tag={tag}")
+        self._log_activity('find', "SEARCH", f"Searched with criteria: filename='{filename}', patient_id='{patient_id}', modality='{modality}', date='{study_date}', tag='{tag}'")
         return results
     
-    def _log_activity(self, activity_type, details):
+    def _log_activity(self, method, activity_type, details):
         """Log an activity to history file"""
         with open(self.history_file, 'a') as f:
             timestamp = datetime.now().isoformat()
@@ -287,9 +315,9 @@ class BioMedDataManager:
                 
                 user = str(config_file).replace('{', '').replace('}', '').replace("'manager':", '')
             
-            f.write(f"{timestamp}|{activity_type}: {details}|{user}\n")
+            f.write(f"{timestamp}|command: {method}|{activity_type}: {details}|{user}\n")
 
-    def hist(self, number=5):
+    def hist(self, number:int):
         """
         To display history or logs
         """
@@ -299,10 +327,10 @@ class BioMedDataManager:
         with open(self.history_file, 'r') as h_f:    
             lines = h_f.readlines()
             lines.reverse()
-            for l in lines[:number+1]:
-                print(f'{l}\n')
+            for l in lines[:number]:
+                print(f'{l}', end="")
         
-        self._log_activity("HIST", f"Show {number} recently performed activities")
+        self._log_activity('hist', "HIST", f"Show {number} recently performed activities")
 
     def export(self, id, path):
         """
@@ -313,26 +341,23 @@ class BioMedDataManager:
             raise RuntimeError("First you need to load the boot, run 'python bmdm.py boot' first")
         
         if not os.path.exists(path):
-            self._log_activity("EXPORT_ERROR", "Target directory does not exist.")
+            self._log_activity('export', "EXPORT_ERROR", "Target directory does not exist.")
             raise RuntimeError("Target directory does not exist.")
         
-        with open(self.index_file, "r") as i_f:
-            index_file = json.load(i_f)
-            metadata = dict(index_file.values())
-            for entry in metadata:
-                if entry["patient_id"] == id:
-                    if os.path.isfile(path):
-                        self._log_activity("EXPORT_ERROR", f"{os.path.basename(path)} is file and can not write to it your information.")
-                        raise RuntimeError(f"{os.path.basename(path)} is file and can not write to it your information. you should just enter the folder path.")
-                    else:
-                        with open(rf"{path}/{metadata['filename']}", "w") as export_file:
-                            json.dump(entry, export_file)
-                    self._log_activity("EXPORT", f"Extracted successfully in the file {path}/{metadata['filename']} done.")
-                    return
-
+        files = self.find(patient_id=id)
+        if not files:
             # if id file not exist    
-            self._log_activity("EXPORT_ERROR", "ID not found.")
+            self._log_activity('export', "EXPORT_ERROR", "ID not found.")
             raise RuntimeError("ID not found.")
+        for entry in files:
+            if os.path.isfile(path):
+                self._log_activity('export', "EXPORT_ERROR", f"{os.path.basename(path)} is file and can not write to it your information.")
+                raise RuntimeError(f"{os.path.basename(path)} is file and can not write to it your information. you should just enter the folder path.")
+            else:
+                with open(rf"{path}\{entry['filename']}", "w") as export_file:
+                    json.dump(entry, export_file, indent=4)
+            self._log_activity('export', "EXPORT", f"Extracted successfully in the file {path}/{entry['filename']} done.")
+
                 
     def remove(self, id_filename):
         """
@@ -344,19 +369,21 @@ class BioMedDataManager:
         
         with open(self.index_file, 'r') as i_f:
             index_file = json.load(i_f)
-            
+            hashs = list(index_file.keys())
             for h, key in enumerate(index_file):
                 entry = index_file[key]
                 if entry["filename"] == id_filename or entry["patient_id"] == id_filename:
-                    index_file.pop(h)
-                    self._log_activity("REMOVE", f"{id_filename} was removed.")
+                    del index_file[hashs[h]]
+                    self._log_activity('remove', "REMOVE", f"{id_filename} was removed.")
+                    with open(self.index_file, "w") as i_f:
+                        json.dump(index_file, i_f, indent=4)
                     return
                 else:
-                    self._log_activity("REMOVE_ERROR", f"{id_filename} not found.")
+                    self._log_activity('remove', "REMOVE_ERROR", f"{id_filename} not found.")
                     raise RuntimeError(f"{id_filename} not found.")
             
-            with open(self.index_file, "w") as i_f:
-                json.dump(index_file, i_f)
+            self._log_activity('remove', "REMOVE_ERROR", "The index file is empty.")
+            raise RuntimeError('The index file is empty.')
 
 # command line interface
-UI_commandline.main()
+UI_commandline

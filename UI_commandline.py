@@ -57,20 +57,37 @@ def main():
         command = args.command
         result = None
         if command == "boot":
+            method = command
             result = manager.boot()
         elif command == "config":
+            method = command
             result = manager.config(name=args.user_name, email=args.user_email)
         elif command == "admit":
+            method = command
             result = manager.admit(args.path)
         elif command == "stats":
+            method = command
             result = manager.stats()
         elif command == "tag":
+            method = command
+            if args.add_tag:
+                key_value = args.add_tag.split('=', 1)
+                key = key_value[0]
+                value = key_value[1]
+                remove_tag = False
+            elif args.remove_tag:
+                remove_tag = True
+                key = args.remove_tag
+                value = None
+
             result = manager.tag(
-                args.entry,
-                add_tag=args.add_tag,
-                remove_tag=args.remove_tag
+                id_filename=args.entry,
+                key=key,
+                value=value,
+                remove=remove_tag
             )
         elif command == "find":
+            method = command
             study_date = args.study_date
             if study_date and "-" in study_date:
                 start, end = study_date.split("-")
@@ -82,13 +99,22 @@ def main():
                 tag=args.tag
             )
         elif command == "hist":
-            result = manager.hist(limit=args.limit)
+            method = command
+            if args.limit:
+                result = manager.hist(args.limit)
+            else:
+                result = manager.hist(5)
         elif command == "export":
+            method = command
             result = manager.export(args.entry_id, args.target_directory)
         elif command == "remove":
+            method = command
             result = manager.remove(args.entry_id)
         if result is not None:
             print(json.dumps(result, indent=2))
 
     except Exception as e:
+        manager._log_activity(method, "ERROR", e)
         print(f"[ERROR] {e}")
+
+main()
