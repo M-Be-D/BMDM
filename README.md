@@ -1,3 +1,4 @@
+
 # 🩺 BioMed Data Manager (BMDM)
 
 پروژه BMDM یک ابزار مدیریت داده‌های پزشکی به‌صورت خط فرمان (CLI) است. این ابزار با هدف ذخیره‌سازی امن، دسته‌بندی و جستجوی اطلاعات بیماران طراحی شده و از فایل‌های متنی و JSON پشتیبانی می‌کند.
@@ -20,14 +21,15 @@
 
 ## 🧪 نصب و اجرا
 
-
 ### اجرای دستورات:
 
 ```bash
 python bmdm.py <command> [options]
+```
 
-مثال‌ها:
+### مثال‌ها:
 
+```bash
 python bmdm.py boot
 python bmdm.py config --user.name "Dr. MD" --user.email "md@example.com"
 python bmdm.py admit ./patients/
@@ -38,25 +40,30 @@ python bmdm.py find --patient-id PATIENT123 --tag severity=high
 python bmdm.py hist --limit 10
 python bmdm.py export PATIENT123 ./exports/
 python bmdm.py remove PATIENT123
-
+```
 
 ---
 
+## 📊 فرمت فایل‌ها
 
-📊 فرمت فایل‌ها
+### 📄 فایل txt:
 
-📄 فایل txt:
-
+```
 PATIENTID_STUDYDATE_MODALITY_DESCRIPTION.txt
 مثال: P001_20240115_MRI_BrainScan.txt
+```
 
-📄 فایل json:
+### 📄 فایل json:
 
+```json
 {
   "patient_id": "P002",
   "study_date": "20240220",
   "modality": "ECG",
-  "description": "Resting 12-lead ECG",
-  ...
+  "description": "Resting 12-lead ECG"
 }
+```
 
+---
+
+پروژه نهایی – تابستان 2025
