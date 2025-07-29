@@ -181,32 +181,38 @@ class BioMedDataManager:
             
             raise RuntimeError("First you need to load the boot, run 'python bmdm.py boot' first")
         
-        try:
-            with open(self.index_file, "r") as index:
-                data = json.load(index)
-                total = len(data)
-                num = 0 # number of data that are not recoded
-                for i in os.listdir("./"):
-                    if i.endswith(".txt"):    
-                        if hashlib.blake2s(i.encode('utf-8')).hexdigest()[:8] not in data.keys():
-                            num +=1
-                    elif i.endswith(".json"):
-                        with open(i, "rb") as f:
-                            file = f.read()
-                            if hashlib.blake2s(file).hexdigest()[:8] not in data.keys():
-                                num += 1
-                # A series of statistical information to be added later
-                ...
+        with open(self.index_file, "r") as index:
+            data = json.load(index)
+            total = len(data)
+            unmanaged = []
+            patients = []
+            modalities = []
+            tags = []
+            for i in os.listdir("./"):
+                if i.endswith(".txt"):    
+                    if hashlib.blake2s(i.encode('utf-8')).hexdigest()[:8] not in list(data.keys()):
+                        unmanaged.append(i)
+                elif i.endswith(".json"):
+                    with open(i, "rb") as f:
+                        file = f.read()
+                        if hashlib.blake2s(file).hexdigest()[:8] not in list(data.keys()):
+                            unmanaged.append(i)
+            
+            for h in list(data.keys()):
+                patients.append(data[h]['patient_id'])
+                modalities.append(data[h]['modality'])
+                tags.append(str(data[h]['tags']))
 
-                self._log_activity('stats', "STATS", "All data was retrieved.")
+            stats = {
+                "total_entries": total,
+                "unmanaged_files": unmanaged,
+                "patients": patients,
+                "modalities": list(set(modalities)),
+                "tags": list(set(tags))
+            }
 
-        except Exception as e:
-            if "No such file or directory" in str(e):
-                
-                print("You must first run 'bmdm.py boot'.")
-            else:
-                self._log_activity('stats', "STATS_ERROR", str(e))
-                print(f"ERROR: {e}")
+            self._log_activity('stats', "STATS", "All data was retrieved.")
+            return stats
     
     def tag(self, id_filename:str, key:str, value:str, remove:bool):
         """
