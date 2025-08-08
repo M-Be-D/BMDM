@@ -332,11 +332,17 @@ class BioMedDataManager:
         with open(self.history_file, 'r') as h_f:    
             lines = h_f.readlines()
             lines.reverse()
+            #
+            if number == 'all':
+                number = len(lines)
+            hist = []
             for l in lines[:number]:
                 print(f'{l}', end="")
+                hist.append(l)
         
         self._log_activity('hist', "HIST", f"Show {number} recently performed activities")
-
+        return hist
+    
     def export(self, id, path):
         """
         To export information
