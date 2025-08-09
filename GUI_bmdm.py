@@ -357,3 +357,81 @@ class GUI_BioMedDataManager():
         print_label.pack(side='left', fill='both', expand=True)
         # Link the scrollbar to the text widge
         scrollbar.config(command=print_label.yview)
+
+    def hist(self):
+        '''To display history or logs'''
+        self._destroy_frame()
+        # Inner function to fetch and display all history logs
+        def all_hist():
+            hist = self.bmdm.hist('all')
+            hist = [f"{i+1}. {item}" for i, item in enumerate(hist)] #
+            print_label.config(state='normal')
+            print_label.delete('1.0', tk.END)
+            # Insert the history entries into the text widget, each on a new line
+            print_label.insert('1.0', '\n'.join(hist))
+            print_label.config(state='disabled')
+        # Frame for displaying the text area and scrollbars
+        text_frame = tk.Frame(self.main_frame)
+        text_frame.grid(row=1,column=0, pady=20)
+        # Button to trigger loading and displaying the history logs
+        hist_button = tk.Button(self.main_frame, text='مشاهده لاگ ها', command=all_hist)
+        # Vertical scrollbar for the text widget
+        yscrollbar = tk.Scrollbar(text_frame)
+        yscrollbar.pack(side='right', fill='y')
+        # Horizontal scrollbar for the text widget
+        xscrollbar = tk.Scrollbar(text_frame, orient='horizontal')
+        xscrollbar.pack(side='bottom', fill='x')
+        print_label = tk.Text(text_frame, width=70, height=13, wrap='none', yscrollcommand=yscrollbar.set, xscrollcommand=xscrollbar.set, state='disabled')
+        # Text widget for displaying history logs (no wrapping for better formatting)
+        hist_button.grid(row=0,column=0)
+        print_label.pack(side='left', fill='both', expand=True)
+        # Link scrollbars to the text widget
+        yscrollbar.config(command=print_label.yview)
+        xscrollbar.config(command=print_label.xview)
+
+    def export(self):
+        '''To export information'''
+        self._destroy_frame()
+        # Inner function to perform the actual export
+        def _export():
+            self.bmdm.export(id_filename.get(), path)
+            success_label.config(text='با موفقیت انجام شد', font=("B Nazanin", 10, 'bold'), fg='green')
+        # Function to open a folder selection dialog
+        def choose_folder():  
+            global path #
+            # Enable the path entry so it can be updated
+            path_input.config(state="normal")
+            path_input.delete(0, tk.END)
+            success_label.config(text='')
+            # Open folder selection dialog
+            path = filedialog.askdirectory(title="انتخاب پوشه")
+            path_input.insert(0, path)
+            path_input.config(state="readonly")
+        # Function to display a "please wait" message before exporting
+        def wait_to_extract():
+            success_label.config(text='...صبر کنید', font=("B Nazanin", 10, 'bold'), fg='black')
+            self.window.after(1000, _export) #
+        # Frame for file selection controls
+        file_frame = tk.Frame(self.main_frame)
+        file_frame.grid(row=0,column=0, pady=20)
+        # Frame for folder selection controls
+        folder_frame = tk.Frame(self.main_frame)
+        folder_frame.grid(row=1,column=0,pady=10)
+        # Variable to store selected file ID
+        id_filename = tk.StringVar()
+        # Label for file selection
+        filename_label = tk.Label(file_frame, text='آی‌دی فایل مورد نظر برای اسخراج را انتخاب کنید')
+        filename_input = ttk.Combobox(file_frame, textvariable=id_filename, state='readonly')
+        filename_input['values'] = self.bmdm.stats()['patients'] #
+        filename_input.current(0) #
+        file_button = tk.Button(folder_frame, text='مسبر استخراج را وارد کنید', command=choose_folder)
+        path_input = tk.Entry(folder_frame, width=50, state='readonly')
+        export_button = tk.Button(self.main_frame, text='استخراج اطلاعات', command=wait_to_extract)
+        success_label = tk.Label(self.main_frame)
+        # Place UI elements in the grid
+        filename_label.grid(row=0,column=1)
+        filename_input.grid(row=0,column=0,pady=10)
+        file_button.grid(row=0,column=1,padx=10)
+        path_input.grid(row=0,column=0)
+        export_button.grid(row=2,column=0)
+        success_label.grid(row=3,column=0,pady=10)
