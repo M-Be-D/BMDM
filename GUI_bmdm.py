@@ -435,3 +435,33 @@ class GUI_BioMedDataManager():
         path_input.grid(row=0,column=0)
         export_button.grid(row=2,column=0)
         success_label.grid(row=3,column=0,pady=10)
+
+    def remove(self):
+        '''To remove information'''
+        self._destroy_frame()
+        # Inner function to remove the selected file
+        def _remove():
+            self.bmdm.remove(id_filename.get())
+            success_label.config(text='با موفقیت انجام شد', font=("B Nazanin", 10, 'bold'), fg='green')
+            filename_input['values'] = self.bmdm.stats()['patients']
+        # Function to show "please wait" before actually removing
+        def wait_to_remove():
+            success_label.config(text='...صبر کنید', font=("B Nazanin", 10, 'bold'), fg='black')
+            self.window.after(1000, _remove) #
+        # Frame for file selection controls
+        file_frame = tk.Frame(self.main_frame)
+        file_frame.grid(row=0,column=0, pady=20)
+        # Variable to store selected file ID
+        id_filename = tk.StringVar()
+        # Label for file selection
+        filename_label = tk.Label(file_frame, text='آی‌دی فایل مورد نظر برای حذف را انتخاب کنید')
+        filename_input = ttk.Combobox(file_frame, textvariable=id_filename, state='readonly')
+        filename_input['values'] = self.bmdm.stats()['patients'] #
+        filename_input.current(0) #
+        remove_button = tk.Button(self.main_frame, text='حذف کردن', command=wait_to_remove)
+        success_label = tk.Label(self.main_frame)
+        # Place UI elements in the grid
+        filename_label.grid(row=0,column=1)
+        filename_input.grid(row=0,column=0,pady=10)
+        remove_button.grid(row=1,column=0)
+        success_label.grid(row=2,column=0,pady=10)
