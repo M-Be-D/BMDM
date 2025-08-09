@@ -2,6 +2,8 @@
 from BioMedDataManager import BioMedDataManager
 import tkinter as tk
 from tkinter import ttk
+from tkinter import filedialog
+from tkinter import messagebox
 import os
 import json
 
@@ -84,3 +86,51 @@ class GUI_BioMedDataManager():
         hist_button.grid(row=0, column=5, padx=8, pady=8)
         export_button.grid(row=0, column=6, padx=8, pady=8)
         remove_button.grid(row=0, column=7, padx=8, pady=8)
+    
+    def config(self):
+        '''to configure and store user or doctor information'''
+        #
+        def _config():
+            self.bmdm.config(name.get(), email.get())
+            name_entry.config(state='readonly', bg='lightgrey')
+            email_entry.config(state='readonly', bg='lightgrey')
+        # Internal function to enable editing of the name and email input fields
+        def _changeable():
+            name_entry.config(state='normal', bg='white')
+            email_entry.config(state='normal', bg='white')
+
+        # Load existing configuration data from file
+        with open(self.config_file, 'r') as conf_file:
+            config_file = json.load(conf_file)
+            
+        self._destroy_frame() # Clear current frame before loading new widgets
+        # Initialize StringVar variables with current configuration values
+        name = tk.StringVar()
+        name.set(config_file['manager']['name'])
+        email = tk.StringVar()
+        email.set(config_file['manager']['email'])
+        # Create labels, input fields, and buttons for user interaction
+        name_label = tk.Label(self.main_frame, text=':نام خود را وارد کنید')
+        name_entry = tk.Entry(self.main_frame, textvariable=name)
+        email_label = tk.Label(self.main_frame, text=':ایمیل خود را وارد کنید')
+        email_entry = tk.Entry(self.main_frame, textvariable=email)
+        submit_button = tk.Button(self.main_frame, text='ثبت', command=_config)
+        change_value_button = tk.Button(self.main_frame, text='تغییر', command=_changeable)
+        # Arrange widgets using grid layout
+        name_label.grid(row=0, column=1, padx=3)
+        name_entry.grid(row=0, column=0)
+        email_label.grid(row=1, column=1, padx=3, pady=30)
+        email_entry.grid(row=1, column=0, pady=30)
+        submit_button.grid(row=2, column=0)
+        change_value_button.grid(row=2, column=1)
+        # Set the initial state of input fields to readonly if they already contain data
+        if name.get():
+            name_entry.config(state='readonly', bg='lightgrey')
+        if email.get():
+            email_entry.config(state='readonly', bg='lightgrey')
+
+    def _destroy_frame(self):
+        '''To destroy frame and cleaning screen'''
+        if self.main_frame:    
+            for widget in self.main_frame.winfo_children():
+                widget.destroy()
