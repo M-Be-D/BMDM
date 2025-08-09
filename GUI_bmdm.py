@@ -141,10 +141,15 @@ class GUI_BioMedDataManager():
         # Internal function to submit the selected file or folder path for admitting data,
         # and display success message upon completion
         def _admit():
-            self.bmdm.admit(path)
-            # successful
-            success_label.config(text='با موفقیت انجام شد', font=("B Nazanin", 10, 'bold'), fg='green')
-            # Update the UI label to show success message to the user
+            try:    
+                self.bmdm.admit(path)
+                # successful
+                success_label.config(text='با موفقیت انجام شد', font=("B Nazanin", 10, 'bold'), fg='green')
+                # Update the UI label to show success message to the user
+            except Exception as e:
+                if os.path.exists('.bmdm/history.log') and str(type(e)) != "<class 'RuntimeError'>":
+                    self.bmdm._log_activity('admit', "ERROR", e)
+                messagebox.showerror(title=str(type(e)).replace('<class', '').replace('>', ''), message=str(e))
 
         # Open file dialog to select a single file and update the path input field accordingly
         def choose_file():
@@ -241,13 +246,23 @@ class GUI_BioMedDataManager():
                 value_input.config(state='disabled')
         # Remove the specified tag from the selected data item and show success feedback
         def _tag_remove():
-            # Call data manager to remove tag and show success message
-            self.bmdm.tag(id_filename=id_filename.get(), key=key.get(), value=None, remove=True)
-            success_label.config(text='با موفقیت انجام شد', font=("B Nazanin", 10, 'bold'), fg='green')
-            # Call data manager to remove tag and show success message
+            try:
+                # Call data manager to remove tag and show success message
+                self.bmdm.tag(id_filename=id_filename.get(), key=key.get(), value=None, remove=True)
+                success_label.config(text='با موفقیت انجام شد', font=("B Nazanin", 10, 'bold'), fg='green')
+                # Call data manager to remove tag and show success message
+            except Exception as e:
+                if os.path.exists('.bmdm/history.log') and str(type(e)) != "<class 'RuntimeError'>":
+                    self.bmdm._log_activity('admit', "ERROR", e)
+                messagebox.showerror(title=str(type(e)).replace('<class', '').replace('>', ''), message=str(e))
         def _tag_add():
-            self.bmdm.tag(id_filename=id_filename.get(), key=key.get(), value=value.get(), remove=False)
-            success_label.config(text='با موفقیت انجام شد', font=("B Nazanin", 10, 'bold'), fg='green')
+            try:
+                self.bmdm.tag(id_filename=id_filename.get(), key=key.get(), value=value.get(), remove=False)
+                success_label.config(text='با موفقیت انجام شد', font=("B Nazanin", 10, 'bold'), fg='green')
+            except Exception as e:
+                if os.path.exists('.bmdm/history.log') and str(type(e)) != "<class 'RuntimeError'>":
+                    self.bmdm._log_activity('admit', "ERROR", e)
+                messagebox.showerror(title=str(type(e)).replace('<class', '').replace('>', ''), message=str(e))
         def wait_to_submit():
             # Call data manager to remove tag and show success message
             success_label.config(text='...صبر کنید', font=("B Nazanin", 10, 'bold'), fg='black')
@@ -394,8 +409,13 @@ class GUI_BioMedDataManager():
         self._destroy_frame()
         # Inner function to perform the actual export
         def _export():
-            self.bmdm.export(id_filename.get(), path)
-            success_label.config(text='با موفقیت انجام شد', font=("B Nazanin", 10, 'bold'), fg='green')
+            try:
+                self.bmdm.export(id_filename.get(), path)
+                success_label.config(text='با موفقیت انجام شد', font=("B Nazanin", 10, 'bold'), fg='green')
+            except Exception as e:
+                if os.path.exists('.bmdm/history.log') and str(type(e)) != "<class 'RuntimeError'>":
+                    self.bmdm._log_activity('admit', "ERROR", e)
+                messagebox.showerror(title=str(type(e)).replace('<class', '').replace('>', ''), message=str(e))        
         # Function to open a folder selection dialog
         def choose_folder():  
             global path #
@@ -441,9 +461,14 @@ class GUI_BioMedDataManager():
         self._destroy_frame()
         # Inner function to remove the selected file
         def _remove():
-            self.bmdm.remove(id_filename.get())
-            success_label.config(text='با موفقیت انجام شد', font=("B Nazanin", 10, 'bold'), fg='green')
-            filename_input['values'] = self.bmdm.stats()['patients']
+            try:
+                self.bmdm.remove(id_filename.get())
+                success_label.config(text='با موفقیت انجام شد', font=("B Nazanin", 10, 'bold'), fg='green')
+                filename_input['values'] = self.bmdm.stats()['patients']
+            except Exception as e:
+                if os.path.exists('.bmdm/history.log') and str(type(e)) != "<class 'RuntimeError'>":
+                    self.bmdm._log_activity('admit', "ERROR", e)
+                messagebox.showerror(title=str(type(e)).replace('<class', '').replace('>', ''), message=str(e))
         # Function to show "please wait" before actually removing
         def wait_to_remove():
             success_label.config(text='...صبر کنید', font=("B Nazanin", 10, 'bold'), fg='black')

@@ -133,4 +133,4 @@ else:
     except Exception as e:
         if os.path.exists('.bmdm/history.log'):
             BioMedDataManager._log_activity('UNKNOWN', "ERROR", e)
-        messagebox.showerror(title=type(e), message=str(e))
+        messagebox.showerror(title=str(type(e)).replace('<class', '').replace('>', ''), message=str(e))
