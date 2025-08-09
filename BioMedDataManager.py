@@ -309,13 +309,13 @@ class BioMedDataManager:
                     results.append(index_file[entry])
         self._log_activity('find', "SEARCH", f"Searched with criteria: filename='{filename}', patient_id='{patient_id}', modality='{modality}', date='{study_date}', tag='{tag}'")
         return results
-    
-    def _log_activity(self, method, activity_type, details):
+    @classmethod
+    def _log_activity(cls, method, activity_type, details):
         """Log an activity to history file"""
-        with open(self.history_file, 'a') as f:
+        with open(cls.history_file, 'a') as f:
             timestamp = datetime.now().isoformat()
 
-            with open(self.config_file, "r") as c_f:
+            with open(cls.config_file, "r") as c_f:
                 config_file = json.load(c_f)
                 
                 user = str(config_file).replace('{', '').replace('}', '').replace("'manager':", '')
