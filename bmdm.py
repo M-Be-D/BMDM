@@ -2,6 +2,9 @@ from BioMedDataManager import BioMedDataManager
 import argparse
 import json
 import os
+import sys
+import tkinter as tk
+from tkinter import messagebox
 
 # main function
 def main():
@@ -115,8 +118,19 @@ def main():
             print(json.dumps(result, indent=2))
 
     except Exception as e:
-        if os.path.exists('.bmdm/history.log'):
+        if os.path.exists('.bmdm/history.log') and str(type(e)) != "<class 'RuntimeError'>":
             manager._log_activity(method, "ERROR", e)
         print(f"[ERROR] {e}")
 
-main()
+if len(sys.argv) != 1:
+    main()
+else:
+    import GUI_bmdm
+    try:   
+        window = tk.Tk()
+        bmdm = GUI_bmdm.GUI_BioMedDataManager(window)
+        window.mainloop()
+    except Exception as e:
+        if os.path.exists('.bmdm/history.log'):
+            BioMedDataManager._log_activity('UNKNOWN', "ERROR", e)
+        messagebox.showerror(title=type(e), message=str(e))
