@@ -206,3 +206,93 @@ class GUI_BioMedDataManager():
         path_input.grid(row=1,column=2)
         submit_button.grid(row=1,column=0)
         success_label.grid(row=2,column=2)
+    
+    def stats(self):
+        '''to display a collection of data and statical information under management and observation'''
+        self._destroy_frame()# Clear the main frame to prepare for stats display
+            # Retrieve the statistics dictionary from the data manager
+        def _stats():
+            # Enable the text widget to update its content
+            stats_dict = self.bmdm.stats()
+            stats = f"total_entries: {stats_dict['total_entries']}\nunmanaged_files: {stats_dict['unmanaged_files']}\npatients: {stats_dict['patients']}\nmodalities: {stats_dict['modalities']}\ntags: {stats_dict['tags']}"
+            # Insert the formatted stats string into the text widget
+            print_label.config(state='normal')
+            print_label.delete('1.0', tk.END)
+        # Create a button to trigger stats retrieval and display
+            print_label.insert('1.0', stats)
+            print_label.config(state='disabled')
+        # Arrange the button and text widget in the grid layout
+        stats_button = tk.Button(self.main_frame, text='وضعیت', font=("B Nazanin", 15, 'bold'), command=_stats)
+        print_label = tk.Text(self.main_frame, width=60, height=7)
+        # Clear the main frame before showing tag widgets
+        stats_button.grid(row=0,column=0)
+        print_label.grid(row=1, column=0, pady=10)
+
+    def tag(self):
+        '''to add or remove description tags for a specific data item'''
+        self._destroy_frame()
+            # Enable or disable value input based on selected radio button (add or remove tag)
+        def rbutton():
+            if ch_rbutton.get() == 'add_tag':
+                value_input.config(state='normal')
+                
+            elif ch_rbutton.get() == 'remove_tag':
+                value_input.delete(0, tk.END)
+                value_input.config(state='disabled')
+        # Remove the specified tag from the selected data item and show success feedback
+        def _tag_remove():
+            # Call data manager to remove tag and show success message
+            self.bmdm.tag(id_filename=id_filename.get(), key=key.get(), value=None, remove=True)
+            success_label.config(text='با موفقیت انجام شد', font=("B Nazanin", 10, 'bold'), fg='green')
+            # Call data manager to remove tag and show success message
+        def _tag_add():
+            self.bmdm.tag(id_filename=id_filename.get(), key=key.get(), value=value.get(), remove=False)
+            success_label.config(text='با موفقیت انجام شد', font=("B Nazanin", 10, 'bold'), fg='green')
+        def wait_to_submit():
+            # Call data manager to remove tag and show success message
+            success_label.config(text='...صبر کنید', font=("B Nazanin", 10, 'bold'), fg='black')
+            #
+            if ch_rbutton.get() == 'add_tag':
+                self.window.after(1000, _tag_add)
+            elif ch_rbutton.get() == 'remove_tag':
+                self.window.after(1000, _tag_remove)
+            # Call data manager to remove tag and show success message
+        rudio_frame = tk.Frame(self.main_frame)
+        rudio_frame.grid(row=0,column=0)
+        #
+        input_frame = tk.Frame(self.main_frame)
+        input_frame.grid(row=1,column=0)
+        #
+        file_frame = tk.Frame(self.main_frame)
+        file_frame.grid(row=2,column=0, pady=20)
+            # Call data manager to remove tag and show success message
+        ch_rbutton = tk.StringVar(master=rudio_frame, value='add_tag')
+        key = tk.StringVar(master=input_frame)
+        value = tk.StringVar(master=input_frame)
+        id_filename = tk.StringVar(master=file_frame)
+            # Call data manager to remove tag and show success message
+        label = tk.Label(rudio_frame, text='می‌خواهید تگی را حذف کنید یا اضافه کنید؟')
+        remove_tag = tk.Radiobutton(rudio_frame, text='حذف', variable=ch_rbutton, value='remove_tag', command=rbutton)
+        add_tag = tk.Radiobutton(rudio_frame, text='اضافه', variable=ch_rbutton, value='add_tag', command=rbutton)
+        key_label = tk.Label(input_frame, text=':کلید')
+        value_label = tk.Label(input_frame, text=':مقدار')
+        key_input = tk.Entry(input_frame, textvariable=key)
+        value_input = tk.Entry(input_frame, textvariable=value)
+        filename_label = tk.Label(file_frame, text=':آی‌دی مورد نظر را انتخاب کنید')
+        filename_input = ttk.Combobox(file_frame, textvariable=id_filename, state='readonly')
+        filename_input['values'] = self.bmdm.stats()['patients'] #
+        filename_input.current(0) #
+        submit_button = tk.Button(self.main_frame, text='ثبت', command=wait_to_submit)
+        success_label = tk.Label(self.main_frame)
+        # Place widgets in grid layout inside their frames
+        label.grid(row=0,column=3, pady=20)
+        add_tag.grid(row=0,column=2, pady=20)
+        remove_tag.grid(row=0,column=1, pady=20)
+        key_label.grid(row=0,column=3)
+        key_input.grid(row=0,column=2)
+        value_label.grid(row=0,column=1)
+        value_input.grid(row=0,column=0)
+        filename_label.grid(row=0,column=2)
+        filename_input.grid(row=0,column=1)
+        submit_button.grid(row=3,column=0)
+        success_label.grid(row=4,column=0)
