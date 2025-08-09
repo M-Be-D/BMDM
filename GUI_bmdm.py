@@ -263,6 +263,7 @@ class GUI_BioMedDataManager():
                 if os.path.exists('.bmdm/history.log') and str(type(e)) != "<class 'RuntimeError'>":
                     self.bmdm._log_activity('admit', "ERROR", e)
                 messagebox.showerror(title=str(type(e)).replace('<class', '').replace('>', ''), message=str(e))
+                success_label.config(text='')
         def wait_to_submit():
             # Call data manager to remove tag and show success message
             success_label.config(text='...صبر کنید', font=("B Nazanin", 10, 'bold'), fg='black')
@@ -296,7 +297,7 @@ class GUI_BioMedDataManager():
         filename_label = tk.Label(file_frame, text=':آی‌دی مورد نظر را انتخاب کنید')
         filename_input = ttk.Combobox(file_frame, textvariable=id_filename, state='readonly')
         filename_input['values'] = self.bmdm.stats()['patients'] #
-        filename_input.current(0) #
+        # filename_input.current(0) #
         submit_button = tk.Button(self.main_frame, text='ثبت', command=wait_to_submit)
         success_label = tk.Label(self.main_frame)
         # Place widgets in grid layout inside their frames
@@ -415,7 +416,8 @@ class GUI_BioMedDataManager():
             except Exception as e:
                 if os.path.exists('.bmdm/history.log') and str(type(e)) != "<class 'RuntimeError'>":
                     self.bmdm._log_activity('admit', "ERROR", e)
-                messagebox.showerror(title=str(type(e)).replace('<class', '').replace('>', ''), message=str(e))        
+                messagebox.showerror(title=str(type(e)).replace('<class', '').replace('>', ''), message=str(e))
+                success_label.config(text='')
         # Function to open a folder selection dialog
         def choose_folder():  
             global path #
@@ -443,7 +445,7 @@ class GUI_BioMedDataManager():
         filename_label = tk.Label(file_frame, text='آی‌دی فایل مورد نظر برای اسخراج را انتخاب کنید')
         filename_input = ttk.Combobox(file_frame, textvariable=id_filename, state='readonly')
         filename_input['values'] = self.bmdm.stats()['patients'] #
-        filename_input.current(0) #
+        # filename_input.current(0) #
         file_button = tk.Button(folder_frame, text='مسبر استخراج را وارد کنید', command=choose_folder)
         path_input = tk.Entry(folder_frame, width=50, state='readonly')
         export_button = tk.Button(self.main_frame, text='استخراج اطلاعات', command=wait_to_extract)
@@ -469,6 +471,7 @@ class GUI_BioMedDataManager():
                 if os.path.exists('.bmdm/history.log') and str(type(e)) != "<class 'RuntimeError'>":
                     self.bmdm._log_activity('admit', "ERROR", e)
                 messagebox.showerror(title=str(type(e)).replace('<class', '').replace('>', ''), message=str(e))
+                success_label.config(text='')
         # Function to show "please wait" before actually removing
         def wait_to_remove():
             success_label.config(text='...صبر کنید', font=("B Nazanin", 10, 'bold'), fg='black')
@@ -482,7 +485,7 @@ class GUI_BioMedDataManager():
         filename_label = tk.Label(file_frame, text='آی‌دی فایل مورد نظر برای حذف را انتخاب کنید')
         filename_input = ttk.Combobox(file_frame, textvariable=id_filename, state='readonly')
         filename_input['values'] = self.bmdm.stats()['patients'] #
-        filename_input.current(0) #
+        # filename_input.current(0) #
         remove_button = tk.Button(self.main_frame, text='حذف کردن', command=wait_to_remove)
         success_label = tk.Label(self.main_frame)
         # Place UI elements in the grid

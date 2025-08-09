@@ -17,12 +17,12 @@ class BioMedDataManager:
     * Method 'export': to export information
     * Method 'remove': to remove information
     """
+    config_file = ".bmdm/config.json"
+    history_file = ".bmdm/history.log"
     def __init__(self):
         self.bmdm_dir = ".bmdm"
         self.index_file = ".bmdm/index.json"
-        self.config_file = ".bmdm/config.json"
         self.objects_dir = ".bmdm/objects"
-        self.history_file = ".bmdm/history.log"
 
     def boot(self):
         """

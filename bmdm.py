@@ -125,10 +125,10 @@ def main():
 if len(sys.argv) != 1:
     main()
 else:
-    import GUI_bmdm
+    from GUI_bmdm import GUI_BioMedDataManager
     try:   
         window = tk.Tk()
-        bmdm = GUI_bmdm.GUI_BioMedDataManager(window)
+        bmdm = GUI_BioMedDataManager(window)
         window.mainloop()
     except Exception as e:
         if os.path.exists('.bmdm/history.log'):
