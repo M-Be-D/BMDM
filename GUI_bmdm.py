@@ -134,3 +134,75 @@ class GUI_BioMedDataManager():
         if self.main_frame:    
             for widget in self.main_frame.winfo_children():
                 widget.destroy()
+
+    def admit(self):
+        '''To add medical data'''
+        self._destroy_frame() # Clear the main frame before loading admit widgets
+        # Internal function to submit the selected file or folder path for admitting data,
+        # and display success message upon completion
+        def _admit():
+            self.bmdm.admit(path)
+            # successful
+            success_label.config(text='با موفقیت انجام شد', font=("B Nazanin", 10, 'bold'), fg='green')
+            # Update the UI label to show success message to the user
+
+        # Open file dialog to select a single file and update the path input field accordingly
+        def choose_file():
+            global path #
+            # Enable the path input field and clear its content
+            path_input.config(state="normal")
+            path_input.delete(0, tk.END)
+            success_label.config(text='')
+            # Open a dialog for selecting a single file (txt or json)
+            path = filedialog.askopenfilename(
+                title='انتخاب فایل',
+                filetypes=[("Json files", "*.txt"), ("Text files", "*.json")]
+            )
+            path_input.insert(0, path)
+            path_input.config(state='readonly')
+        # clear and update the path input field with the selected folder path
+        def choose_folder():  
+            global path #
+            # Enable the path input field and clear its content
+            path_input.config(state="normal")
+            path_input.delete(0, tk.END)
+            success_label.config(text='')
+            # Open a dialog for selecting a directory (folder)
+            path = filedialog.askdirectory(title="انتخاب پوشه")
+            path_input.insert(0, path)
+            path_input.config(state="readonly")
+        # Update the file button text and command based on the selected radio button (file or folder)
+        def choose():
+            # Enable and clear the path input field before new selection
+            path_input.config(state="normal")
+            path_input.delete(0, tk.END)
+            success_label.config(text='')
+            # Update the file selection button to correspond to the selected mode (file or folder)
+            if choose_rbutton.get()=='file':
+                file_button.config(text='انتخاب فایل', command=choose_file)
+            if choose_rbutton.get()=='folder':
+                file_button.config(text='انتخاب پوشه', command=choose_folder)
+        # Show a help message box explaining supported formats and usage instructions
+        def _help():
+            help_massage = 'این نرم افزار فقط از فرمت های txt و json پشتیبانی میکنه\nاگر میخواهید فایلی را انتخاب کنید با زدن گزینه "انتخاب فایل" آن را انتخاب کنید\nو اگر میخواهید چند فایل را انتخاب کنید همه را در یک پوشه بریزید و پوشه را انتخاب کنید.'
+            messagebox.showinfo(title='info', message=help_massage)
+        # Define all main menu buttons with their labels, fonts, sizes, and command callbacks
+        choose_rbutton = tk.StringVar()
+        choose_rbutton.set('file') #
+        label = tk.Label(self.main_frame, text=':روش ثبت اطلاعات بیمار یا بیماران را انتخاب کنید')
+        file = tk.Radiobutton(self.main_frame, text='فایل', variable=choose_rbutton, value='file', command=choose)
+        folder = tk.Radiobutton(self.main_frame, text='پوشه', variable=choose_rbutton, value='folder', command=choose)
+        help_button = tk.Button(self.main_frame, text='?', font=("Arial", 10, "bold"), command=_help)
+        file_button = tk.Button(self.main_frame, text='انتخاب فایل', command=choose_file)
+        path_input = tk.Entry(self.main_frame, width=50)
+        submit_button = tk.Button(self.main_frame, text='ثبت', command=_admit)
+        success_label = tk.Label(self.main_frame)
+        # Arrange all buttons in a single row with padding for spacing
+        label.grid(row=0,column=3, pady=20)
+        file.grid(row=0,column=2, pady=20)
+        folder.grid(row=0,column=1, pady=20)
+        help_button.grid(row=0,column=0)
+        file_button.grid(row=1,column=3)
+        path_input.grid(row=1,column=2)
+        submit_button.grid(row=1,column=0)
+        success_label.grid(row=2,column=2)
