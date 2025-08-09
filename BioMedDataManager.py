@@ -3,6 +3,7 @@ import os
 import json
 import hashlib
 from datetime import datetime
+from tkinter import messagebox
 
 class BioMedDataManager:
     """
@@ -213,7 +214,7 @@ class BioMedDataManager:
             self._log_activity('stats', "STATS", "All data was retrieved.")
             return stats
     
-    def tag(self, id_filename:str, key:str, value:str, remove:bool):
+    def tag(self, id_filename:str, key:str, value:str, remove:bool, is_gui=False):
         """
         to add or remove description tags for a specific data item
         """
@@ -250,12 +251,20 @@ class BioMedDataManager:
                     if key not in list(index_file[hashs[id_s.index(id_filename)]]["tags"].keys()):
                         index_file[hashs[id_s.index(id_filename)]]["tags"][key] = value
                     else:
-                        if input("A tag with this key already exists.\nAre you sure you want to change it(yes,no)? ").lower() in ('y', "yes"):
-                            index_file[hashs[id_s.index(id_filename)]]["tags"][key] = value
+                        if not is_gui:    
+                            if input("A tag with this key already exists.\nAre you sure you want to change it(yes,no)? ").lower() in ('y', "yes"):
+                                index_file[hashs[id_s.index(id_filename)]]["tags"][key] = value
+                            else:
+                                print('No changes were made.')
+                                self._log_activity('tag', "ADD_TAG", "Not new tags have been added")
+                                return
                         else:
-                            print('No changes were made.')
-                            self._log_activity('tag', "ADD_TAG", "Not new tags have been added")
-                            return
+                            answer = messagebox.askyesno('تگ تکراری', "A tag with this key already exists.\nAre you sure you want to change it?")
+                            if answer:
+                                index_file[hashs[id_s.index(id_filename)]]["tags"][key] = value
+                            else:
+                                messagebox.showwarning('تگ تکراری', 'No changes were made.')
+                                self._log_activity('tag', "ADD_TAG", "Not new tags have been added")
                     with open(self.index_file, "w") as index:    
                         json.dump(index_file, index, indent=4)
                 elif id_filename in name_s:

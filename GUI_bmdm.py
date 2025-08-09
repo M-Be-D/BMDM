@@ -257,7 +257,7 @@ class GUI_BioMedDataManager():
                 messagebox.showerror(title=str(type(e)).replace('<class', '').replace('>', ''), message=str(e))
         def _tag_add():
             try:
-                self.bmdm.tag(id_filename=id_filename.get(), key=key.get(), value=value.get(), remove=False)
+                self.bmdm.tag(id_filename=id_filename.get(), key=key.get(), value=value.get(), remove=False, is_gui=True)
                 success_label.config(text='با موفقیت انجام شد', font=("B Nazanin", 10, 'bold'), fg='green')
             except Exception as e:
                 if os.path.exists('.bmdm/history.log') and str(type(e)) != "<class 'RuntimeError'>":
