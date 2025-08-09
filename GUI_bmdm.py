@@ -296,3 +296,64 @@ class GUI_BioMedDataManager():
         filename_input.grid(row=0,column=1)
         submit_button.grid(row=3,column=0)
         success_label.grid(row=4,column=0)
+
+    def find(self):
+        '''to search between data with a specific filter'''
+        self._destroy_frame()
+        #
+        def _find():
+            # Perform the search using filter inputs, format results, and display them in the text widget
+            find_list = self.bmdm.find(filename.get(), patient_id.get(), study_date.get(), modality.get(), tag.get())
+            #
+            result_dict = dict()
+            for n, item in enumerate(find_list):
+                result_dict[n+1] = item
+            # Enable the text widget for updating the content
+            print_label.config(state='normal')
+            print_label.delete('1.0', tk.END)
+            # Insert formatted JSON results into the text widget
+            print_label.insert('1.0', json.dumps(result_dict, indent=4, ensure_ascii=False))
+            print_label.config(state='disabled')
+        # Frame for the search input fields
+        find_frame = tk.Frame(self.main_frame)
+        find_frame.grid(row=0,column=0)
+        # Frame for the results display area
+        text_frame = tk.Frame(self.main_frame)
+        text_frame.grid(row=2, column=0, pady=10)
+        # String variables to store user inputs
+        filename = tk.StringVar(value=None)
+        patient_id = tk.StringVar(value=None)
+        study_date = tk.StringVar(value=None)
+        modality = tk.StringVar(value=None)
+        tag = tk.StringVar(value=None)
+        # Entry widgets for the search fields
+        filename_label = tk.Label(find_frame, text='نام فایل')
+        patient_id_label = tk.Label(find_frame, text='آی‌دی')
+        study_date_label = tk.Label(find_frame, text='تاریخ خوانده شده')
+        modality_label = tk.Label(find_frame, text='modality')
+        tag_label = tk.Label(find_frame, text='(key=value) تگ')
+        filename_input = tk.Entry(find_frame, textvariable=filename, justify='center')
+        patient_id_input = tk.Entry(find_frame, textvariable=patient_id, justify='center')
+        study_date_input = tk.Entry(find_frame, textvariable=study_date, justify='center')
+        modality_input = tk.Entry(find_frame, textvariable=modality, justify='center')
+        tag_input = tk.Entry(find_frame, textvariable=tag, justify='center')
+        find_button = tk.Button(self.main_frame, text='پیدا کردن', command=_find)
+        # Scrollbar for the results area
+        scrollbar = tk.Scrollbar(text_frame)
+        scrollbar.pack(side='right', fill='y')
+        print_label = tk.Text(text_frame, width=70, height=13, yscrollcommand=scrollbar.set, state='disabled')
+        # Place labels and inputs in the search frame
+        filename_label.grid(row=0,column=0)
+        filename_input.grid(row=1,column=0, pady=10)
+        patient_id_label.grid(row=0,column=1)
+        patient_id_input.grid(row=1,column=1, pady=10)
+        study_date_label.grid(row=0,column=2)
+        study_date_input.grid(row=1,column=2, pady=10)
+        modality_label.grid(row=0,column=3)
+        modality_input.grid(row=1,column=3, pady=10)
+        tag_label.grid(row=0,column=4)
+        tag_input.grid(row=1,column=4, pady=10)
+        find_button.grid(row=1,column=0)
+        print_label.pack(side='left', fill='both', expand=True)
+        # Link the scrollbar to the text widge
+        scrollbar.config(command=print_label.yview)
