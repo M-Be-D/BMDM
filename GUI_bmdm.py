@@ -69,23 +69,32 @@ class GUI_BioMedDataManager():
         tap_frame.rowconfigure(0, weight=1)
         tap_frame.columnconfigure(0, weight=1)
         # Create buttons for each main feature and assign their commands
-        config_button = tk.Button(tap_frame, text='config', font=("B Nazanin", 12), width=5, height=1, command=self.config)
-        admit_button = tk.Button(tap_frame, text='admit', font=("B Nazanin", 12), width=5, height=1, command=self.admit)
-        stats_button = tk.Button(tap_frame, text='stats', font=("B Nazanin", 12), width=5, height=1, command=self.stats)
-        tag_button = tk.Button(tap_frame, text='tag', font=("B Nazanin", 12), width=5, height=1, command=self.tag)
-        find_button = tk.Button(tap_frame, text='find', font=("B Nazanin", 12), width=5, height=1, command=self.find)
-        hist_button = tk.Button(tap_frame, text='hist', font=("B Nazanin", 12), width=5, height=1, command=self.hist)
-        export_button = tk.Button(tap_frame, text='export', font=("B Nazanin", 12), width=5, height=1, command=self.export)
-        remove_button = tk.Button(tap_frame, text='remove', font=("B Nazanin", 12), width=5, height=1, command=self.remove)
+        self.buttons ={
+            "config": tk.Button(tap_frame, text='config', font=("B Nazanin", 12), width=5, height=1, command=self.config),
+            "admit": tk.Button(tap_frame, text='admit', font=("B Nazanin", 12), width=5, height=1, command=self.admit),
+            "stats": tk.Button(tap_frame, text='stats', font=("B Nazanin", 12), width=5, height=1, command=self.stats),
+            "tag": tk.Button(tap_frame, text='tag', font=("B Nazanin", 12), width=5, height=1, command=self.tag),
+            "find": tk.Button(tap_frame, text='find', font=("B Nazanin", 12), width=5, height=1, command=self.find),
+            "hist": tk.Button(tap_frame, text='hist', font=("B Nazanin", 12), width=5, height=1, command=self.hist),
+            "export": tk.Button(tap_frame, text='export', font=("B Nazanin", 12), width=5, height=1, command=self.export),
+            "remove": tk.Button(tap_frame, text='remove', font=("B Nazanin", 12), width=5, height=1, command=self.remove)
+        }
+        # If the app is not configured, the buttons will be disabled
+        with open(self.config_file, 'r') as conf_file:
+            config_file = json.load(conf_file)
+            if config_file['manager']['name'] == '' or config_file['manager']['name'] == '':
+                for button in self.buttons.values():
+                    if button != self.buttons['config']:
+                        button.config(state='disable')
         # Arrange the buttons in a single row grid with padding for better spacing
-        config_button.grid(row=0, column=0, padx=8, pady=8)
-        admit_button.grid(row=0, column=1, padx=8, pady=8)
-        stats_button.grid(row=0, column=2, padx=8, pady=8)
-        tag_button.grid(row=0, column=3, padx=8, pady=8)
-        find_button.grid(row=0, column=4, padx=8, pady=8)
-        hist_button.grid(row=0, column=5, padx=8, pady=8)
-        export_button.grid(row=0, column=6, padx=8, pady=8)
-        remove_button.grid(row=0, column=7, padx=8, pady=8)
+        self.buttons["config"].grid(row=0, column=0, padx=8, pady=8)
+        self.buttons["admit"].grid(row=0, column=1, padx=8, pady=8)
+        self.buttons["stats"].grid(row=0, column=2, padx=8, pady=8)
+        self.buttons["tag"].grid(row=0, column=3, padx=8, pady=8)
+        self.buttons["find"].grid(row=0, column=4, padx=8, pady=8)
+        self.buttons["hist"].grid(row=0, column=5, padx=8, pady=8)
+        self.buttons["export"].grid(row=0, column=6, padx=8, pady=8)
+        self.buttons["remove"].grid(row=0, column=7, padx=8, pady=8)
     
     def config(self):
         '''to configure and store user or doctor information'''
@@ -95,6 +104,9 @@ class GUI_BioMedDataManager():
                 self.bmdm.config(name.get(), email.get())
                 name_entry.config(state='readonly', bg='lightgrey')
                 email_entry.config(state='readonly', bg='lightgrey')
+                # Active the buttons
+                for button in self.buttons.values():
+                    button.config(state='normal')
             except Exception as e:
                 if os.path.exists('.bmdm/history.log') and str(type(e)) != "<class 'RuntimeError'>":
                     self.bmdm._log_activity('admit', "ERROR", e)
@@ -103,6 +115,10 @@ class GUI_BioMedDataManager():
         def _changeable():
             name_entry.config(state='normal', bg='white')
             email_entry.config(state='normal', bg='white')
+            # Disable the buttons
+            for button in self.buttons.values():
+                if button != self.buttons['config']:
+                    button.config(state='disable')
 
         # Load existing configuration data from file
         with open(self.config_file, 'r') as conf_file:
