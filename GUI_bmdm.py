@@ -402,7 +402,7 @@ class GUI_BioMedDataManager():
         # Inner function to fetch and display all history logs
         def all_hist():
             hist = self.bmdm.hist('all')
-            hist = [f"{i+1}. {item}" for i, item in enumerate(hist)] #
+            hist = [f"* {item}" for i, item in enumerate(hist)] #
             print_label.config(state='normal')
             print_label.delete('1.0', tk.END)
             # Insert the history entries into the text widget, each on a new line
