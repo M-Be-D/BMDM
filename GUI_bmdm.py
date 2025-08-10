@@ -20,6 +20,7 @@ class GUI_BioMedDataManager():
         self.history_file = ".bmdm/history.log"
         # Initialize the GUI components, create the main frame, and set window properties
         self.window = window
+        self.window.iconbitmap(r"D:\university\calss programing\project_pargar\BMDM\icon\logo_bmdm.ico")
         self.main_frame = tk.Frame(window)
         self.bmdm = BioMedDataManager()
         self.window.title('Biomedical data manager')
