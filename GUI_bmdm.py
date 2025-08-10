@@ -91,9 +91,14 @@ class GUI_BioMedDataManager():
         '''to configure and store user or doctor information'''
         #
         def _config():
-            self.bmdm.config(name.get(), email.get())
-            name_entry.config(state='readonly', bg='lightgrey')
-            email_entry.config(state='readonly', bg='lightgrey')
+            try:
+                self.bmdm.config(name.get(), email.get())
+                name_entry.config(state='readonly', bg='lightgrey')
+                email_entry.config(state='readonly', bg='lightgrey')
+            except Exception as e:
+                if os.path.exists('.bmdm/history.log') and str(type(e)) != "<class 'RuntimeError'>":
+                    self.bmdm._log_activity('admit', "ERROR", e)
+                messagebox.showerror(title=str(type(e)).replace('<class', '').replace('>', ''), message=str(e))
         # Internal function to enable editing of the name and email input fields
         def _changeable():
             name_entry.config(state='normal', bg='white')

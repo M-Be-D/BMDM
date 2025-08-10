@@ -4,6 +4,7 @@ import json
 import hashlib
 from datetime import datetime
 from tkinter import messagebox
+import re
 
 class BioMedDataManager:
     """
@@ -76,6 +77,10 @@ class BioMedDataManager:
 
             raise RuntimeError("First you need to load the boot. (python bmdm.py boot)")
 
+        # format email --> user@example.com 
+        pattern = re.compile(r'^[^@]+@[^@]+\.com$')
+        if not bool(pattern.fullmatch(email)):
+            raise RuntimeError("The email must be in the format 'user@example.com'")
         # To add name and email to config file
         with open(self.config_file, 'r') as conf:
             config = json.load(conf)
