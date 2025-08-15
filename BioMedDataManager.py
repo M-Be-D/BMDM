@@ -132,10 +132,9 @@ class BioMedDataManager:
             elif file.endswith(".json"):
                 with open(file, 'rb') as f:
                     metadata = json.load(f)
-                    metadata["filename"] = file
+                    hash = hashlib.blake2s(str(metadata).encode()).hexdigest()
+                    metadata["filename"] = os.path.basename(file)
                     metadata["tags"] = {}
-                    file = f.read()
-                    hash = hashlib.blake2s(file).hexdigest()
                     return metadata, hash
 
         # if input is file
@@ -147,7 +146,7 @@ class BioMedDataManager:
             med_data = {hash[:8]: metadata}
             with open(self.index_file, 'r') as index:
                 index_data = json.load(index)
-            index_data.update(med_data)
+                index_data.update(med_data)
             with open(self.index_file, "w") as index:
                 json.dump(index_data, index, indent=4)
             with open(f"{self.objects_dir}/{hash}.data", 'w') as mdate:
@@ -173,7 +172,7 @@ class BioMedDataManager:
                 
             if len(files) == 0:
                 self._log_activity('admit', "ADMIT_ERROR", "The specified folder does not contain a file with the correct format.")
-                print("The specified folder does not contain a file with the correct format.")
+                raise RuntimeError("The specified folder does not contain a file with the correct format.")
 
             else:
                 self._log_activity('admit', "ADMIT", "Information was recorded.")
@@ -199,10 +198,10 @@ class BioMedDataManager:
                         unmanaged.append(i)
                 elif i.endswith(".json"):
                     with open(i, "rb") as f:
-                        file = f.read()
-                        if hashlib.blake2s(file).hexdigest()[:8] not in list(data.keys()):
+                        file = json.load(f) # have problem
+                        if hashlib.blake2s(str(file).encode()).hexdigest()[:8] not in list(data.keys()):
                             unmanaged.append(i)
-            
+
             for h in list(data.keys()):
                 patients.append(data[h]['patient_id'])
                 modalities.append(data[h]['modality'])
